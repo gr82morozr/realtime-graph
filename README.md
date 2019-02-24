@@ -8,11 +8,13 @@
 
 ##### Features #####
 
-1- Data can be read from FILE, HTTP, Serial channels.
+1- Data can be read from FILE, TCP or Serial ports.
 
 2- Multiprocessing to imporve the refresh rate of graph, normally > 50FPS.
 
-3- self-defined data structure and screen layout.
+3- Self-defined data structure and screen layout.
+
+4- Platform independent, works on both Windows and Linux.
 
 
 
