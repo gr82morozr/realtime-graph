@@ -52,9 +52,6 @@ from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 
 import OpenGL.GL as gl
-import py3toolbox as tb
-import re
-
 
 class Bubble(object):
     def __init__(self, position, radius, velocity):
@@ -67,14 +64,20 @@ class Bubble(object):
         self.updateBrush()
 
     def updateBrush(self):
-        gradient = QRadialGradient(QPointF(self.radius, self.radius),
-                self.radius, QPointF(self.radius*0.5, self.radius*0.5))
+        gradient = QRadialGradient(QPointF(self.radius, self.radius), self.radius, QPointF(self.radius*0.5, self.radius*0.5))
 
         gradient.setColorAt(0, QColor(255, 255, 255, 255))
         gradient.setColorAt(0.25, self.innerColor)
         gradient.setColorAt(1, self.outerColor)
         self.brush = QBrush(gradient)
 
+    def drawBubble(self, painter):
+        painter.save()
+        painter.translate(self.position.x() - self.radius,
+                self.position.y() - self.radius)
+        painter.setBrush(self.brush)
+        painter.drawEllipse(0, 0, int(2*self.radius), int(2*self.radius))
+        painter.restore()
 
     def randomColor(self):
         red = random.randrange(205, 256)
@@ -188,7 +191,8 @@ class GLWidget(QOpenGLWidget):
         gl.glEnable(gl.GL_LIGHTING)
         gl.glEnable(gl.GL_LIGHT0)
         gl.glEnable(gl.GL_MULTISAMPLE)
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, (0.5, 5.0, 7.0, 1.0))
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION,
+                (0.5, 5.0, 7.0, 1.0))
 
         self.setupViewport(self.width(), self.height())
 
@@ -207,13 +211,10 @@ class GLWidget(QOpenGLWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        """
         for bubble in self.bubbles:
             if bubble.rect().intersects(QRectF(event.rect())):
                 bubble.drawBubble(painter)
-        """
-        
-        
+
         self.drawInstructions(painter)
         painter.end()
 
@@ -221,62 +222,12 @@ class GLWidget(QOpenGLWidget):
         self.setupViewport(width, height)
 
     def showEvent(self, event):
-        #self.createBubbles(20 - len(self.bubbles))
-        pass
-        
-    def sizeHint(self):
-        return QSize(600, 600)
+        self.createBubbles(20 - len(self.bubbles))
 
-        
+    def sizeHint(self):
+        return QSize(400, 400)
 
     def makeObject(self):
-        genList = gl.glGenLists(1)
-        gl.glNewList(genList, gl.GL_COMPILE)
-        vertices = []
-        colors   = [(0.0,0.0,1.0), (0.0,1.0,0.0),(1.0,0.0,0.0)]
-        vnormals = []
-        gl.glBegin(gl.GL_TRIANGLES)     
-        
-        #gl.glBegin(gl.GL_LINES)      
-        
-        obj_lines = tb.read_file(file_name='shuttle1.obj',return_type='list')
-        for obj_line in obj_lines:
-          if obj_line.startswith('v ') : 
-            obj_line = obj_line.replace('v ','')
-            [x,y,z] = obj_line.split(" ")
-            vertices.append ([float(x), float(y),float(z)])
-         
-          if obj_line.startswith('vn ') : 
-            obj_line = obj_line.replace('vn ','')
-            [vn_x,vn_y,vn_z] = obj_line.split(" ")
-            vnormals.append ([float(vn_x), float(vn_y),float(vn_z)])           
-            
-            
-        i = 0
-        
-        
-        
-        for obj_line in obj_lines:
-          if obj_line.startswith('f ') : 
-            obj_line = obj_line.replace('f ','')
-            v = re.findall(r"\s*(\d+)\/\/\d+\s*", obj_line)
-            vn = re.findall(r"\s*\d+\/\/(\d+)\s*", obj_line)
-            #print (int(v[0]) + int(v[1]) + int(v[2]))
-            i +=1
-            gl.glNormal3d(vnormals[int(vn[0])-1][0],vnormals[int(vn[0])-1][1],vnormals[int(vn[0])-1][2])
-            gl.glVertex3f(vertices[int(v[0])-1][0],vertices[int(v[0])-1][1],vertices[int(v[0])-1][2])
-            gl.glVertex3f(vertices[int(v[1])-1][0],vertices[int(v[1])-1][1],vertices[int(v[1])-1][2])
-            gl.glVertex3f(vertices[int(v[2])-1][0],vertices[int(v[2])-1][1],vertices[int(v[2])-1][2])
-         
-   
-        gl.glEnd()
-        gl.glEndList()
-
-        return genList
-    
-        
-        
-    def makeObject1(self):
         genList = gl.glGenLists(1)
         gl.glNewList(genList, gl.GL_COMPILE)
 
@@ -367,10 +318,11 @@ class GLWidget(QOpenGLWidget):
             self.bubbles.append(Bubble(position, radius, velocity))
 
     def animate(self):
-        for bubble in self.bubbles:
-            bubble.move(self.rect())
+        #for bubble in self.bubbles:
+        #    bubble.move(self.rect())
 
         self.update()
+        pass
 
     def setupViewport(self, width, height):
         side = min(width, height)
@@ -379,7 +331,7 @@ class GLWidget(QOpenGLWidget):
 
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        gl.glOrtho(-4, +4, +4, -4, 1.0, 30.0)
+        gl.glOrtho(-0.5, +0.5, +0.5, -0.5, 4.0, 15.0)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def drawInstructions(self, painter):

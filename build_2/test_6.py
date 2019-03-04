@@ -188,7 +188,7 @@ class GLWidget(QOpenGLWidget):
         gl.glEnable(gl.GL_LIGHTING)
         gl.glEnable(gl.GL_LIGHT0)
         gl.glEnable(gl.GL_MULTISAMPLE)
-        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, (0.5, 5.0, 7.0, 1.0))
+        gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, (0.5, -5.0, 7.0, 1.0)) 
 
         self.setupViewport(self.width(), self.height())
 
