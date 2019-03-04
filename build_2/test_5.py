@@ -1,49 +1,10 @@
 #!/usr/bin/env python
 
 
-#############################################################################
-##
-## Copyright (C) 2015 Riverbank Computing Limited.
-## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-## All rights reserved.
-##
-## This file is part of the examples of PyQt.
-##
-## $QT_BEGIN_LICENSE:BSD$
-## You may use this file under the terms of the BSD license as follows:
-##
-## "Redistribution and use in source and binary forms, with or without
-## modification, are permitted provided that the following conditions are
-## met:
-##   * Redistributions of source code must retain the above copyright
-##     notice, this list of conditions and the following disclaimer.
-##   * Redistributions in binary form must reproduce the above copyright
-##     notice, this list of conditions and the following disclaimer in
-##     the documentation and/or other materials provided with the
-##     distribution.
-##   * Neither the name of Nokia Corporation and its Subsidiary(-ies) nor
-##     the names of its contributors may be used to endorse or promote
-##     products derived from this software without specific prior written
-##     permission.
-##
-## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-## "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-## LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-## A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-## OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-## SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-## LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-## DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-## THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-## $QT_END_LICENSE$
-##
-#############################################################################
-
 
 import sys
 import math
+import re
 
 from PyQt5.QtCore import pyqtSignal, QPoint, QSize, Qt
 from PyQt5.QtGui import QColor
@@ -183,7 +144,7 @@ class GLWidget(QOpenGLWidget):
 
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        gl.glOrtho(-2.5, +2.5, +2.5, -2.5, 4.0, 15.0)
+        gl.glOrtho(-4, +4, +4, -4, 2.0, 10.0)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def mousePressEvent(self, event):
@@ -206,97 +167,37 @@ class GLWidget(QOpenGLWidget):
     def makeObject(self):
         genList = gl.glGenLists(1)
         gl.glNewList(genList, gl.GL_COMPILE)
-
-        gl.glBegin(gl.GL_POINTS)      
+        vertices = []
+        colors = [(0.0,0.0,1.0), (0.0,1.0,0.0),(1.0,0.0,0.0)]
+        gl.glBegin(gl.GL_TRIANGLES)     
         
+        #gl.glBegin(gl.GL_LINES)      
         
         obj_lines = tb.read_file(file_name='shuttle1.obj',return_type='list')
         for obj_line in obj_lines:
           if obj_line.startswith('v ') : 
             obj_line = obj_line.replace('v ','')
-            [x,y,z] = obj_line.split(" ")  
-            gl.glVertex3d(float(x), float(y),float(z))
-
-
-
+            [x,y,z] = obj_line.split(" ")
+            vertices.append ([float(x), float(y),float(z)])
+            #gl.glVertex3d(float(x), float(y),float(z))
+        i = 0
+        for obj_line in obj_lines:
+          if obj_line.startswith('f ') : 
+            obj_line = obj_line.replace('f ','')
+            v = re.findall(r"\s*(\d+)\/\/\d+\s*", obj_line)
+            #print (int(v[0]) + int(v[1]) + int(v[2]))
+            i +=1
+            gl.glColor3f(colors[i % 3][0],colors[i % 3][1],colors[i % 3][2])
+            gl.glVertex3f(vertices[int(v[0])-1][0],vertices[int(v[0])-1][1],vertices[int(v[0])-1][2])
+            gl.glVertex3f(vertices[int(v[1])-1][0],vertices[int(v[1])-1][1],vertices[int(v[1])-1][2])
+            gl.glVertex3f(vertices[int(v[2])-1][0],vertices[int(v[2])-1][1],vertices[int(v[2])-1][2])
+         
+   
         gl.glEnd()
         gl.glEndList()
 
         return genList
-    def makeObject1(self):
-        genList = gl.glGenLists(1)
-        gl.glNewList(genList, gl.GL_COMPILE)
-
-        gl.glBegin(gl.GL_POINTS)
-
-        x1 = +0.06
-        y1 = -0.14
-        x2 = +0.14
-        y2 = -0.06
-        x3 = +0.08
-        y3 = +0.00
-        x4 = +0.30
-        y4 = +0.22
-
-        self.quad(x1, y1, x2, y2, y2, x2, y1, x1)
-        self.quad(x3, y3, x4, y4, y4, x4, y3, x3)
-
-
-
-        self.extrude(x1, y1, x2, y2)
-        self.extrude(x2, y2, y2, x2)
-        self.extrude(y2, x2, y1, x1)
-        self.extrude(y1, x1, x1, y1)
-        self.extrude(x3, y3, x4, y4)
-        self.extrude(x4, y4, y4, x4)
-        self.extrude(y4, x4, y3, x3)
-
-        NumSectors = 6
-        
-        """
-        for i in range(NumSectors):
-            angle1 = (i * 2 * math.pi) / NumSectors
-            x5 = 0.30 * math.sin(angle1)
-            y5 = 0.30 * math.cos(angle1)
-            x6 = 0.20 * math.sin(angle1)
-            y6 = 0.20 * math.cos(angle1)
-
-            angle2 = ((i + 1) * 2 * math.pi) / NumSectors
-            x7 = 0.20 * math.sin(angle2)
-            y7 = 0.20 * math.cos(angle2)
-            x8 = 0.30 * math.sin(angle2)
-            y8 = 0.30 * math.cos(angle2)
-
-            self.quad(x5, y5, x6, y6, x7, y7, x8, y8)
-
-            self.extrude(x6, y6, x7, y7)
-            self.extrude(x8, y8, x5, y5)
-        """
-        gl.glEnd()
-        gl.glEndList()
-
-        return genList
-
-    def quad(self, x1, y1, x2, y2, x3, y3, x4, y4):
-        self.setColor(self.trolltechGreen)
-
-        gl.glVertex3d(x1, y1, -0.05)
-        gl.glVertex3d(x2, y2, -0.05)
-        gl.glVertex3d(x3, y3, -0.05)
-        gl.glVertex3d(x4, y4, -0.05)
-
-        gl.glVertex3d(x4, y4, +0.05)
-        gl.glVertex3d(x3, y3, +0.05)
-        gl.glVertex3d(x2, y2, +0.05)
-        gl.glVertex3d(x1, y1, +0.05)
-        
-    def extrude(self, x1, y1, x2, y2):
-        self.setColor(self.trolltechGreen.darker(250 + int(100 * x1)))
-
-        gl.glVertex3d(x1, y1, +0.05)
-        gl.glVertex3d(x2, y2, +0.05)
-        gl.glVertex3d(x2, y2, -0.05)
-        gl.glVertex3d(x1, y1, -0.05)
+    
 
     def normalizeAngle(self, angle):
         while angle < 0:
