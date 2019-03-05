@@ -52,7 +52,12 @@ class Gyro3D(QOpenGLWidget):
 
   def readData(self):
     if self.q_in.qsize()>0 :
-      self.setXRotation(self.q_in.get())
+      try:
+        a = int(self.q_in.get())
+        print (a)
+        self.setXRotation(a)
+      except:
+        pass
 
 
   def setXRotation(self, angle):
@@ -202,9 +207,10 @@ if __name__ == '__main__':
   gm = GyroMonitor(q_data)
   lg = dr.Logger(q_log)
   dr = dr.DataReader(q_data,q_log)
-  
+    
   lg.start()
-  dr.start()
+  dr.start()  
+
   gm.start()
   
 

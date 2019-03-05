@@ -52,7 +52,6 @@ class Logger(multiprocessing.Process):
     while True:
       try : 
         log_message = self.q_log.get(timeout=2)
-        print ('log_message=', log_message)
         if log_message is not None:
           log_file = log_message['log_file']
           if log_file not in self.log_messages.keys():  
