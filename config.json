@@ -1,0 +1,40 @@
+{ 
+  "DataReader": {
+
+    "feed_channel"    : "SERIAL",
+
+    "channels" : {
+      "FILE": {
+        "name" : "R:/temp/sample.data"
+      },
+      "SERIAL": {
+        "port"      : "COM3",
+        "baud_rate" : 9600,
+        "timeout"   : 1
+      },
+      "TCP_SERVER" : {
+        "port"      : 12345
+      },
+      "TCP_CLIENT" : {
+        "host"      : "192.168.1.1",
+        "port"      : 10123
+      },
+      "UDP_SERVER" : {
+        "port"      : 12345
+      },
+      "UDP_CLIENT" : {
+        "host"      : "192.168.1.1",
+        "port"      : 10123
+      },
+      "MQTT"       : "TO_BE_ADDED"
+    },
+    
+    "logger": {
+      "enabled"       : true,
+      "data_input"    : "R:/temp2/data_input.log" ,
+      "data_output"   : "R:/temp2/data_output.log",
+      "script_log"    : "R:/temp2/data_reader.log"
+    }
+  }
+}
+
