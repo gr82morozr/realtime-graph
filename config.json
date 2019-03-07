@@ -1,32 +1,41 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "SERIAL",
+    "feed_channel"    : "TCP_CLT",
 
     "channels" : {
+      
       "FILE": {
         "name" : "R:/temp/sample.data"
       },
+      
       "SERIAL": {
         "port"      : "COM3",
         "baud_rate" : 9600,
         "timeout"   : 1
       },
-      "TCP_SERVER" : {
+      
+      "TCP_SVR" : {
+        "host"      : "192.168.1.200",
         "port"      : 12345
       },
-      "TCP_CLIENT" : {
+      
+      "TCP_CLT" : {
+        "port"      : 12345
+      },
+      
+      "UDP_SVR" : {
+        "port"      : 12345
+      },
+      
+      "UDP_CLT" : {
         "host"      : "192.168.1.1",
         "port"      : 10123
       },
-      "UDP_SERVER" : {
-        "port"      : 12345
-      },
-      "UDP_CLIENT" : {
-        "host"      : "192.168.1.1",
-        "port"      : 10123
-      },
-      "MQTT"       : "TO_BE_ADDED"
+      
+      "MQTT"       : {
+        "TO_BE_ADDED" : "N/A"
+      }
     },
     
     "logger": {

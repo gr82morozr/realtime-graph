@@ -31,14 +31,39 @@ import os,sys,time,json
 import collections
 import serial
 import socket
+import queue
+import threading
 import multiprocessing 
+import socketserver
 import py3toolbox as tb
+
+
+q_thr = queue.Queue()
 
 
 
 def get_config():
   return tb.load_json('./config.json')
 
+class TCPHandler(socketserver.StreamRequestHandler):
+  def handle(self):
+    while True:
+      data = self.rfile.readline().strip().decode('utf-8')
+      if not data: break        
+      q_thr.put(data)
+      if 'quit' in data :  break
+
+
+class Thr2ProcBridge(threading.Thread):
+  def __init__(self, q_thr, q_proc):
+    super(Thr2ProcBridge, self).__init__()
+    self.q_thr  = q_thr
+    self.q_proc = q_proc
+    
+  def run(self):
+    while True:
+      self.q_proc.put(self.q_thr.get())   
+      print (self.q_proc.qsize())
 
 class Logger(multiprocessing.Process):
   def __init__(self, q_log):  
@@ -101,7 +126,7 @@ class DataReader(multiprocessing.Process):
     self.q_out.put(self.mappeddata)
  
 
-  def read_file(self):  
+  def read_from_file(self):  
     file = self.config['channels']['FILE']['name']
     data_lines = tb.read_file(file_name=self.config['channels']['FILE']['name'], return_type='list') 
     for line in data_lines:
@@ -113,7 +138,7 @@ class DataReader(multiprocessing.Process):
 
 
  
-  def read_serial(self):  
+  def read_from_serial(self):  
     ser = serial.Serial(  port      = self.config['channels']['SERIAL']['port']       , 
                           baudrate  = self.config['channels']['SERIAL']['baud_rate']  , 
                           timeout   = self.config['channels']['SERIAL']['timeout']
@@ -148,65 +173,34 @@ class DataReader(multiprocessing.Process):
 
 
 
-  def read_tcpserver(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.sock.bind(('', self.config['TCP_SERVER']['port']))
-    self.sock.listen(5)
-    self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Listening on {}".format(self.config['TCP_SERVER']['port']) } )
-    try:
-      while True:
-        client_socket, client_address = sock.accept()
-        self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Connected from {}".format(client_address) } )
-        # loop serving the new client
-        while True:
-          self.rawdata = client_socket.recv(4096).decode("utf-8")
-          if not self.rawdata: break
-          self.mappeddata = self.mapdata(self.rawdata)
-          self.log({ 'log_file' : self.config['logger']['data_input']  ,  'log_content' : self.rawdata    })
-          self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
-          self.output_data()          
-          
-        client_socket.close(  )
-        self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Disconnected from {}".format(client_address) } )
-    finally:
-      self.sock.close()
+  def read_from_tcpserver(self):
+    PASS
   
 
-  def read_tcpclient(self) : 
-    remote_host = self.config['TCP_CLIENT']['host']
-    remote_port = self.config['TCP_CLIENT']['port']
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((remote_host, remote_port))
-    
-    while True:
-      try :
-        self.rawdata = client.recv(4096).decode("utf-8")
-        self.mappeddata = self.mapdata(self.rawdata)
-        self.log({ 'log_file' : self.config['logger']['data_input']  ,  'log_content' : self.rawdata    })
-        self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
-        self.output_data()
-      except Exception as err:
-        self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : err })
-        pass  
+  def read_from_tcpclient(self) : 
+    port = self.config['channels']['TCP_CLT']['port']
+    thr2proc = Thr2ProcBridge(q_thr,self.q_out)
+    thr2proc.start()
+    with socketserver.TCPServer(('127.0.0.1', port), TCPHandler) as server :
+      server.serve_forever()
    
   def run(self):
     # Dispatch to channel
     self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Data Channel  : {}".format(self.config['feed_channel']) } )
     if self.config['feed_channel']   == 'FILE':
-      self.read_file()
+      self.read_from_file()
     elif self.config['feed_channel'] == 'SERIAL':
-      self.read_serial()
-    elif self.config['feed_channel'] == 'TCP_SERVER':
-      self.read_tcpserver()
-    elif self.config['feed_channel'] == 'TCP_CLIENT':
-      self.read_tcpclient()
-    elif self.config['feed_channel'] == 'UDP_SERVER':
-      self.read_udpserver()
-    elif self.config['feed_channel'] == 'UDP_CLIENT':
-      self.read_udpclient()
+      self.read_from_serial()
+    elif self.config['feed_channel'] == 'TCP_SVR':
+      self.read_from_tcpserver()
+    elif self.config['feed_channel'] == 'TCP_CLT':
+      self.read_from_tcpclient()
+    elif self.config['feed_channel'] == 'UDP_SVR':
+      self.read_from_udpserver()
+    elif self.config['feed_channel'] == 'UDP_CLT':
+      self.read_from_udpclient()
     elif self.config['feed_channel'] == 'MQTT':
-      self.read_mqtt()     
+      self.read_from_mqtt()     
         
 if __name__ == '__main__':   
   q_data = multiprocessing.Queue()  
