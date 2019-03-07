@@ -53,6 +53,17 @@ class TCPHandler(socketserver.StreamRequestHandler):
       q_thr.put(data)
       if 'quit' in data :  break
 
+class TCPServer(threading.Thread):
+  def __init__(self, host, port): 
+    super(TCPServer, self).__init__()
+    self.host = host
+    self.port = port
+  
+  def run(self):
+    with socketserver.TCPServer(('127.0.0.1', self.port), TCPHandler) as server :
+      server.serve_forever()    
+
+
 
 class Thr2ProcBridge(threading.Thread):
   def __init__(self, q_thr, q_proc):
@@ -63,7 +74,7 @@ class Thr2ProcBridge(threading.Thread):
   def run(self):
     while True:
       self.q_proc.put(self.q_thr.get())   
-      print (self.q_proc.qsize())
+
 
 class Logger(multiprocessing.Process):
   def __init__(self, q_log):  
@@ -174,16 +185,19 @@ class DataReader(multiprocessing.Process):
 
 
   def read_from_tcpserver(self):
-    PASS
+    pass
   
 
   def read_from_tcpclient(self) : 
-    port = self.config['channels']['TCP_CLT']['port']
-    thr2proc = Thr2ProcBridge(q_thr,self.q_out)
-    thr2proc.start()
-    with socketserver.TCPServer(('127.0.0.1', port), TCPHandler) as server :
-      server.serve_forever()
-   
+    tcpsvr = TCPServer(host = '127.0.0.1', port = self.config['channels']['TCP_CLT']['port'])
+    tcpsvr.start()
+    while True:
+      self.rawdata = q_thr.get()
+      self.mappeddata = self.mapdata(self.rawdata)
+      self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
+      self.output_data() 
+
+
   def run(self):
     # Dispatch to channel
     self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Data Channel  : {}".format(self.config['feed_channel']) } )
