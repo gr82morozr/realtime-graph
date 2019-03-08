@@ -2,9 +2,9 @@
 
 # =====================================================================
 # This is a common class, which can read data from multiple channels,
-# and then pass to output queue, which will be consumed by Monitors.
+# and then pass to output queue to be consumed by Monitor tools.
 #
-# Combined with the monitors, this utility can be used to monitor 
+# Combined with the monitors, this utility can be used to collect 
 # IOT/Robtics sensors data at real-time, or show 3D object movement
 # of Gyro sensor.
 #
@@ -45,6 +45,13 @@ q_thr = queue.Queue()
 def get_config():
   return tb.load_json('./config.json')
 
+
+
+# =================================================
+#
+# TCP request handler
+#
+# =================================================
 class TCPHandler(socketserver.StreamRequestHandler):
   def handle(self):
     while True:
@@ -53,6 +60,13 @@ class TCPHandler(socketserver.StreamRequestHandler):
       q_thr.put(data)
       if 'quit' in data :  break
 
+
+
+# =================================================
+#
+# TCP server, running in seperate thread
+#
+# =================================================
 class TCPServer(threading.Thread):
   def __init__(self, host, port): 
     super(TCPServer, self).__init__()
@@ -65,6 +79,11 @@ class TCPServer(threading.Thread):
 
 
 
+# =================================================
+#
+# Not used
+#
+# =================================================
 class Thr2ProcBridge(threading.Thread):
   def __init__(self, q_thr, q_proc):
     super(Thr2ProcBridge, self).__init__()
@@ -75,6 +94,11 @@ class Thr2ProcBridge(threading.Thread):
     while True:
       self.q_proc.put(self.q_thr.get())   
 
+# =================================================
+#
+# A simple logging class
+#
+# =================================================
 
 class Logger(multiprocessing.Process):
   def __init__(self, q_log):  
@@ -101,7 +125,14 @@ class Logger(multiprocessing.Process):
           self.timer = time.time()
       except :
         pass
-        
+
+
+# =================================================
+#
+#  Data Reader - main process, creates threading 
+#  for TCP server/UDP server
+#
+# =================================================
 class DataReader(multiprocessing.Process):
   def __init__(self, q_out, q_log):
     multiprocessing.Process.__init__(self)
@@ -114,12 +145,15 @@ class DataReader(multiprocessing.Process):
     self.count        = 0
     print (self.config)
     
+
+
+
     
   def mapdata(self,rawdata):
     # =========================================================
     # map raw data to json format
     # this needs to be customized for your own project
-    #
+    # 
     #rawtext = ''
     
     
@@ -215,7 +249,10 @@ class DataReader(multiprocessing.Process):
       self.read_from_udpclient()
     elif self.config['feed_channel'] == 'MQTT':
       self.read_from_mqtt()     
-        
+
+
+
+
 if __name__ == '__main__':   
   q_data = multiprocessing.Queue()  
   q_log  = multiprocessing.Queue()  
