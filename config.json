@@ -1,7 +1,7 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "TCP_CLT",
+    "feed_channel"    : "UDP_CLT",
 
     "channels" : {
       
@@ -21,7 +21,7 @@
       },
       
       "TCP_CLT" : {
-        "port"      : 12345
+        "port"      : 10123
       },
       
       "UDP_SVR" : {

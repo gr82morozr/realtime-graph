@@ -61,6 +61,15 @@ class TCPHandler(socketserver.StreamRequestHandler):
       if 'quit' in data :  break
 
 
+class UDPHandler(socketserver.DatagramRequestHandler):
+  def handle(self):
+    while True:
+      data = self.rfile.readline().strip().decode('utf-8')
+      if not data: break        
+      q_thr.put(data)
+      if 'quit' in data :  break
+
+
 
 # =================================================
 #
@@ -77,7 +86,20 @@ class TCPServer(threading.Thread):
     with socketserver.TCPServer(('127.0.0.1', self.port), TCPHandler) as server :
       server.serve_forever()    
 
-
+# =================================================
+#
+# UDP server, running in seperate thread
+#
+# =================================================
+class UDPServer(threading.Thread):
+  def __init__(self, host, port): 
+    super(UDPServer, self).__init__()
+    self.host = host
+    self.port = port
+  
+  def run(self):
+    with socketserver.UDPServer(('127.0.0.1', self.port), UDPHandler) as server :
+      server.serve_forever()   
 
 # =================================================
 #
@@ -230,6 +252,16 @@ class DataReader(multiprocessing.Process):
       self.mappeddata = self.mapdata(self.rawdata)
       self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
       self.output_data() 
+
+  def read_from_udpclient(self) : 
+    udpsvr = UDPServer(host = '127.0.0.1', port = self.config['channels']['UDP_CLT']['port'])
+    udpsvr.start()
+    while True:
+      self.rawdata = q_thr.get()
+      self.mappeddata = self.mapdata(self.rawdata)
+      self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
+      self.output_data() 
+
 
 
   def run(self):
