@@ -202,15 +202,9 @@ class GyroMonitor(mp.Process):
 
 if __name__ == '__main__':
   q_data = mp.Queue()  
-  q_log  = mp.Queue()  
-
   gm = GyroMonitor(q_data)
-  lg = dr.Logger(q_log)
-  dr = dr.DataReader(q_data,q_log)
-    
-  lg.start()
+  dr = dr.DataReader(q_data)
   dr.start()  
-
   gm.start()
   
 

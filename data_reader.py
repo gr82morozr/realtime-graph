@@ -156,20 +156,29 @@ class Logger(multiprocessing.Process):
 #
 # =================================================
 class DataReader(multiprocessing.Process):
-  def __init__(self, q_out, q_log):
+  def __init__(self, q_out):
     multiprocessing.Process.__init__(self)
 
     self.q_out        = q_out
-    self.q_log        = q_log
+    self.q_log        = multiprocessing.Queue()  
     self.config       = get_config()['DataReader']
     self.rawdata      = ""
     self.mappeddata   = {}
     self.count        = 0
-    print (self.config)
+    self.input_rate   = 0
+    self.output_rate  = 0
     
+    self.input_time       = time.time()
+    self.input_time_prev  = 0
+    self.input_rate       = 0
+    self.output_time      = time.time()
+    self.output_time_prev = 0
+    
+    self.logger           = Logger(self.q_log)
+    self.logger.start()
+    print (self.config)
 
-
-
+  
     
   def mapdata(self,rawdata):
     # =========================================================
@@ -188,10 +197,27 @@ class DataReader(multiprocessing.Process):
     if self.config['logger']['enabled'] == True : 
       self.q_log.put (message)
     
-    
+  def get_input_rate(self):
+    self.input_time   = time.time()
+    if (self.input_time - self.input_time_prev) > 0:
+      self.input_rate   = 1/(self.input_time - self.input_time_prev)
+    else:
+      self.input_rate = 9999
+    self.input_time_prev  = self.input_time
+
   def output_data (self):
-    self.q_out.put(self.mappeddata)
- 
+    self.get_input_rate()
+    if self.config['throttle']['enabled'] == True:
+      self.output_time   = time.time()
+      if (self.output_time - self.output_time_prev) >0:
+        self.output_rate   = 1/(self.output_time - self.output_time_prev)
+      else:
+        self.output_rate = 9999
+      if self.output_rate <= self.config['throttle']['output_rate'] :
+        self.q_out.put(self.mappeddata)
+        self.output_time_prev  = self.output_time
+    else:
+      self.q_out.put(self.mappeddata)
 
   def read_from_file(self):  
     file = self.config['channels']['FILE']['name']
@@ -287,10 +313,7 @@ class DataReader(multiprocessing.Process):
 
 if __name__ == '__main__':   
   q_data = multiprocessing.Queue()  
-  q_log  = multiprocessing.Queue()  
-  dr     = DataReader(q_data,q_log)
-  logger = Logger(q_log)
-  logger.start()
+  dr     = DataReader(q_data)
   dr.start()
   
     

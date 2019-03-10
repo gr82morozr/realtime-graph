@@ -2,7 +2,12 @@
   "DataReader": {
 
     "feed_channel"    : "UDP_CLT",
-
+    
+    "throttle" : {
+      "enabled" : true,
+      "output_rate" : 60
+    },
+    
     "channels" : {
       
       "FILE": {
