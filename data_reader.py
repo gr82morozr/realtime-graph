@@ -65,6 +65,7 @@ class UDPHandler(socketserver.DatagramRequestHandler):
   def handle(self):
     while True:
       data = self.rfile.readline().strip().decode('utf-8')
+      print (data)
       if not data: break        
       q_thr.put(data)
       if 'quit' in data :  break
@@ -165,6 +166,7 @@ class DataReader(multiprocessing.Process):
     self.rawdata      = ""
     self.mappeddata   = {}
     self.count        = 0
+    
     self.input_rate   = 0
     self.output_rate  = 0
     
@@ -186,10 +188,15 @@ class DataReader(multiprocessing.Process):
     # this needs to be customized for your own project
     # 
     #rawtext = ''
+    print (rawdata)
+    matched_data = tb.re_findall ('yaw=(\-*\d+\.\d*),pitch=(\-*\d+\.\d*),roll=(\-*\d+\.\d*)', rawdata)
+    mappeddata = {
+      "yaw"     : (matched_data[0][0]),
+      "pitch"   : (matched_data[0][1]),
+      "roll"    : (matched_data[0][2])
+    }
     
-    
-    
-    return rawdata
+    return mappeddata
     # =========================================================
  
 
@@ -215,6 +222,7 @@ class DataReader(multiprocessing.Process):
         self.output_rate = 9999
       if self.output_rate <= self.config['throttle']['output_rate'] :
         self.q_out.put(self.mappeddata)
+        print (self.mappeddata)
         self.output_time_prev  = self.output_time
     else:
       self.q_out.put(self.mappeddata)
@@ -280,7 +288,7 @@ class DataReader(multiprocessing.Process):
       self.output_data() 
 
   def read_from_udpclient(self) : 
-    udpsvr = UDPServer(host = '127.0.0.1', port = self.config['channels']['UDP_CLT']['port'])
+    udpsvr = UDPServer(host =  self.config['channels']['UDP_CLT']['host'], port = self.config['channels']['UDP_CLT']['port'])
     udpsvr.start()
     while True:
       self.rawdata = q_thr.get()

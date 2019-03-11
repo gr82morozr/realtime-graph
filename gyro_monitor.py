@@ -32,7 +32,7 @@ class Gyro3D(QOpenGLWidget):
     self.yRot   = 0
     self.zRot   = 0
   
-    self.trolltechGreen = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
+    self.trolltechGreen  = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
     self.trolltechPurple = QColor.fromCmykF(0.39, 0.39, 0.0, 0.0)
 
     self.animationTimer = QTimer()
@@ -53,13 +53,15 @@ class Gyro3D(QOpenGLWidget):
   def readData(self):
     if self.q_in.qsize()>0 :
       try:
-        a = int(self.q_in.get())
-        print (a)
-        self.setXRotation(a)
+        data = self.q_in.get()
+        self.setXRotation(data['yaw'])
+        self.setYRotation(data['roll'])
+        self.setZRotation(data['pitch'])
       except:
         pass
-
-
+    
+    
+    
   def setXRotation(self, angle):
     angle = self.normalizeAngle(angle)
     if angle != self.xRot:
@@ -204,8 +206,9 @@ if __name__ == '__main__':
   q_data = mp.Queue()  
   gm = GyroMonitor(q_data)
   dr = dr.DataReader(q_data)
-  dr.start()  
   gm.start()
+  dr.start()  
+  
   
 
   
