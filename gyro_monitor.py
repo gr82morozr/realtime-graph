@@ -12,20 +12,15 @@ from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTim
 from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfaceFormat)
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 
-def get_config() :
-  config = { 
-    "window_w" : 600,
-    "window_h" : 400,
-    "object_file" : "shuttle4.obj",
-  }
-  
-  return config
+def get_config():
+  return tb.load_json('./config.json')
+
 
 
 class Gyro3D(QOpenGLWidget):
   def __init__(self,  q_in=None):
     super(Gyro3D, self).__init__()
-    self.config = get_config()
+    self.config = get_config()['GyroMonitor']
     self.q_in   = q_in
     self.object = 0
     self.xRot   = 0

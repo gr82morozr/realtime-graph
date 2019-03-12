@@ -49,6 +49,39 @@
       "data_output"   : "R:/temp2/data_output.log",
       "script_log"    : "R:/temp2/data_reader.log"
     }
+  },
+  
+  "GyroMonitor" : {
+    "window_w"        : 600,
+    "window_h"        : 400,
+    "object_file"     : "shuttle4.obj"
+  },
+  
+  "GraphMonitor" : {
+    "layouts"           : {
+      "win_layout"      : (5,3),
+      "boards"          : { 
+        "1"   : { "layout" : (1,1,1,1), "max_entries" : 100 },
+        "2"   : { "layout" : (1,2,1,1), "max_entries" : 100 },
+        "3"   : { "layout" : (1,3,1,1), "max_entries" : 100 },       
+                            
+        "4"   : { "layout" : (2,1,1,1), "max_entries" : 100 }, 
+        "5"   : { "layout" : (2,2,1,1), "max_entries" : 100 },
+        "6"   : { "layout" : (2,3,1,1), "max_entries" : 100 }, 
+                            
+        "7"   : { "layout" : (3,1,1,1), "max_entries" : 100 }, 
+        "8"   : { "layout" : (3,2,1,1), "max_entries" : 100 },
+        "9"   : { "layout" : (3,3,1,1), "max_entries" : 100 }, 
+
+        "10"  : { "layout" : (4,1,1,1), "max_entries" : 100 }, 
+        "11"  : { "layout" : (4,2,1,1), "max_entries" : 100 },
+        "12"  : { "layout" : (4,3,1,1), "max_entries" : 100 }, 
+
+        "13"  : { "layout" : (5,1,1,3), "max_entries" : 400 }
+      }
+    }
+  }
+  
   }
 }
 

@@ -84,7 +84,7 @@ class TCPServer(threading.Thread):
     self.port = port
   
   def run(self):
-    with socketserver.TCPServer(('127.0.0.1', self.port), TCPHandler) as server :
+    with socketserver.TCPServer((self.host, self.port), TCPHandler) as server :
       server.serve_forever()    
 
 # =================================================
@@ -99,23 +99,9 @@ class UDPServer(threading.Thread):
     self.port = port
   
   def run(self):
-    with socketserver.UDPServer(('127.0.0.1', self.port), UDPHandler) as server :
+    with socketserver.UDPServer((self.host, self.port), UDPHandler) as server :
       server.serve_forever()   
 
-# =================================================
-#
-# Not used
-#
-# =================================================
-class Thr2ProcBridge(threading.Thread):
-  def __init__(self, q_thr, q_proc):
-    super(Thr2ProcBridge, self).__init__()
-    self.q_thr  = q_thr
-    self.q_proc = q_proc
-    
-  def run(self):
-    while True:
-      self.q_proc.put(self.q_thr.get())   
 
 # =================================================
 #
@@ -188,14 +174,14 @@ class DataReader(multiprocessing.Process):
     # this needs to be customized for your own project
     # 
     #rawtext = ''
-    print (rawdata)
+
     matched_data = tb.re_findall ('yaw=(\-*\d+\.\d*),pitch=(\-*\d+\.\d*),roll=(\-*\d+\.\d*)', rawdata)
     mappeddata = {
-      "yaw"     : (matched_data[0][0]),
-      "pitch"   : (matched_data[0][1]),
-      "roll"    : (matched_data[0][2])
+      "yaw"     : (float(matched_data[0][0])),
+      "pitch"   : (float(matched_data[0][1])),
+      "roll"    : (float(matched_data[0][2]))
     }
-    
+    print (mappeddata)
     return mappeddata
     # =========================================================
  
