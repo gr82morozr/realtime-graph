@@ -112,7 +112,6 @@ class Gyro3D(QOpenGLWidget):
     gl.glRotated(self.yRot , 0.0, 1.0, 0.0)
     gl.glRotated(self.zRot , 0.0, 0.0, 1.0)
     gl.glCallList(self.object)
-
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glPopMatrix()
 

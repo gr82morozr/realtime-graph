@@ -1,7 +1,7 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "UDP_CLT",
+    "feed_channel"    : "FILE",
     
     "throttle" : {
       "enabled" : true,
@@ -11,7 +11,7 @@
     "channels" : {
       
       "FILE": {
-        "name" : "R:/temp/sample.data"
+        "name" : "./sample.data"
       },
       
       "SERIAL": {
@@ -59,29 +59,59 @@
   
   "GraphMonitor" : {
     "layouts"           : {
-      "win_layout"      : (5,3),
+      "win_layout"      : [5,3],
       "boards"          : { 
-        "1"   : { "layout" : (1,1,1,1), "max_entries" : 100 },
-        "2"   : { "layout" : (1,2,1,1), "max_entries" : 100 },
-        "3"   : { "layout" : (1,3,1,1), "max_entries" : 100 },       
+        "1"   : { "layout" : [1,1,1,1], "max_entries" : 100 },
+        "2"   : { "layout" : [1,2,1,1], "max_entries" : 100 },
+        "3"   : { "layout" : [1,3,1,1], "max_entries" : 100 },       
                             
-        "4"   : { "layout" : (2,1,1,1), "max_entries" : 100 }, 
-        "5"   : { "layout" : (2,2,1,1), "max_entries" : 100 },
-        "6"   : { "layout" : (2,3,1,1), "max_entries" : 100 }, 
+        "4"   : { "layout" : [2,1,1,1], "max_entries" : 100 }, 
+        "5"   : { "layout" : [2,2,1,1], "max_entries" : 100 },
+        "6"   : { "layout" : [2,3,1,1], "max_entries" : 100 }, 
                             
-        "7"   : { "layout" : (3,1,1,1), "max_entries" : 100 }, 
-        "8"   : { "layout" : (3,2,1,1), "max_entries" : 100 },
-        "9"   : { "layout" : (3,3,1,1), "max_entries" : 100 }, 
+        "7"   : { "layout" : [3,1,1,1], "max_entries" : 100 }, 
+        "8"   : { "layout" : [3,2,1,1], "max_entries" : 100 },
+        "9"   : { "layout" : [3,3,1,1], "max_entries" : 100 }, 
 
-        "10"  : { "layout" : (4,1,1,1), "max_entries" : 100 }, 
-        "11"  : { "layout" : (4,2,1,1), "max_entries" : 100 },
-        "12"  : { "layout" : (4,3,1,1), "max_entries" : 100 }, 
+        "10"  : { "layout" : [4,1,1,1], "max_entries" : 100 }, 
+        "11"  : { "layout" : [4,2,1,1], "max_entries" : 100 },
+        "12"  : { "layout" : [4,3,1,1], "max_entries" : 100 }, 
 
-        "13"  : { "layout" : (5,1,1,3), "max_entries" : 400 }
+        "13"  : { "layout" : [5,1,1,3], "max_entries" : 400 }
       }
-    }
-  }
+    },
   
+  
+    "data_config"     : { 
+      "ax"      : { "board_id"    : "1", "color" : "b"  },
+      "ay"      : { "board_id"    : "2", "color" : "g"  },
+      "az"      : { "board_id"    : "3", "color" : "r"  },
+
+      "gx"      : { "board_id"    : "4", "color" : "c"  },
+      "gy"      : { "board_id"    : "5", "color" : "m"  },
+      "gz"      : { "board_id"    : "6", "color" : "y"  },
+                          
+      "ax_raw"  : { "board_id"    : "1", "color" : [60,60,60]   },
+      "ay_raw"  : { "board_id"    : "2", "color" : [60,60,60]   },
+      "az_raw"  : { "board_id"    : "3", "color" : [60,60,60]   },
+
+      "gx_raw"  : { "board_id"    : "4", "color" : [60,60,60]   },
+      "gy_raw"  : { "board_id"    : "5", "color" : [60,60,60]   },
+      "gz_raw"  : { "board_id"    : "6", "color" : [60,60,60]   },
+                          
+      "Pitch"   : { "board_id"    : "7", "color" : "r"   },
+      "Yaw"     : { "board_id"    : "8", "color" : "g"   },
+      "Roll"    : { "board_id"    : "9", "color" : "b"   },
+
+      "err_P"   : { "board_id"    :"10", "color" : "r"   },
+      "err_I"   : { "board_id"    :"11", "color" : "g"   },
+      "err_D"   : { "board_id"    :"12", "color" : "b"   },
+
+      "Error"     : { "board_id"  :"13", "color" : "w"   },
+      "PID"       : { "board_id"  :"13", "color" : "r"   },
+      "g_int"     : { "board_id"  :"13", "color" : "g"   },
+      "g_pitch"   : { "board_id"  :"13", "color" : "b"   }
+    }
   }
 }
 

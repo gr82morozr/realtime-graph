@@ -175,11 +175,18 @@ class DataReader(multiprocessing.Process):
     # 
     #rawtext = ''
 
-    matched_data = tb.re_findall ('yaw=(\-*\d+\.\d*),pitch=(\-*\d+\.\d*),roll=(\-*\d+\.\d*)', rawdata)
+    yaw_matched = tb.re_findall   ('Yaw=(\-*\d+\.\d*)/i',   rawdata)
+    
+    
+    print (yaw_matched)
+    exit(1)
+    
+    pitch_matched = tb.re_findall ('Pitch=(\-*\d+\.\d*)/i', rawdata)
+    roll_matched = tb.re_findall  ('Roll=(\-*\d+\.\d*)/i',  rawdata)
     mappeddata = {
-      "yaw"     : (float(matched_data[0][0])),
-      "pitch"   : (float(matched_data[0][1])),
-      "roll"    : (float(matched_data[0][2]))
+      "Yaw"     : float(yaw_matched[0][0]),
+      "Pitch"   : float(pitch_matched[0][0]),
+      "Roll"    : float(roll_matched[0][0])
     }
     print (mappeddata)
     return mappeddata
