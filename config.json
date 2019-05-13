@@ -1,7 +1,7 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "FILE",
+    "feed_channel"    : "SERIAL",
     
     "throttle" : {
       "enabled" : true,
@@ -16,7 +16,7 @@
       
       "SERIAL": {
         "port"      : "COM3",
-        "baud_rate" : 9600,
+        "baud_rate" : 115200,
         "timeout"   : 1
       },
       
@@ -54,9 +54,15 @@
   "GyroMonitor" : {
     "window_w"        : 600,
     "window_h"        : 400,
-    "object_file"     : "shuttle4.obj"
+    "object_file"     : "shuttle4.obj",
+    "rotation"        : {
+                          "E" : "Euler Angle" ,
+                          "Q" : "Quaternion"  ,
+                          "R" : "Regular XYZ" 
+    }
   },
-  
+
+
   "GraphMonitor" : {
     "layouts"           : {
       "win_layout"      : [5,3],

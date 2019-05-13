@@ -12,6 +12,10 @@ from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTim
 from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfaceFormat)
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 
+
+# Rotation Setting 
+
+
 def get_config():
   return tb.load_json('./config.json')
 
@@ -21,12 +25,22 @@ class Gyro3D(QOpenGLWidget):
   def __init__(self,  q_in=None):
     super(Gyro3D, self).__init__()
     self.config = get_config()['GyroMonitor']
+    self.rotation = 'E'
     self.q_in   = q_in
     self.object = 0
     self.xRot   = 0
     self.yRot   = 0
     self.zRot   = 0
+
+    self.qW     = 0
+    self.qX     = 0
+    self.qY     = 0
+    self.qZ     = 0
   
+    self.rX     = 0
+    self.rY     = 0
+    self.rZ     = 0
+
     self.trolltechGreen  = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
     self.trolltechPurple = QColor.fromCmykF(0.39, 0.39, 0.0, 0.0)
 
@@ -49,9 +63,23 @@ class Gyro3D(QOpenGLWidget):
     if self.q_in.qsize()>0 :
       try:
         data = self.q_in.get()
-        self.setXRotation(data['yaw'])
-        self.setYRotation(data['roll'])
-        self.setZRotation(data['pitch'])
+        #self.setXRotation(data['yaw'])
+        #self.setYRotation(data['roll'])
+        #self.setZRotation(data['pitch'])
+        """
+        self.qW     = data['qW']
+        self.qX     = data['qX']
+        self.qY     = data['qY']
+        self.qZ     = data['qZ']
+        """
+        self.rX     = data['rX']
+        self.rY     = data['rY']
+        self.rZ     = data['rZ']
+      
+        #self.setXRotation(data['rX'])
+        #self.setYRotation(data['rY'])
+        #self.setZRotation(data['rZ'])
+        print ("read ", data)
       except:
         pass
     
@@ -76,7 +104,7 @@ class Gyro3D(QOpenGLWidget):
     self.object = self.makeObject()
 
   def mousePressEvent(self, event):
-    self.lastPos = event.pos()
+    self.lastPos = event.pos() 
 
   def mouseMoveEvent(self, event):
     dx = event.x() - self.lastPos.x()
@@ -107,10 +135,28 @@ class Gyro3D(QOpenGLWidget):
     self.setupViewport(self.width(), self.height())
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
-    gl.glTranslated(0.0, 0.0, -10.0)
-    gl.glRotated(self.xRot , 1.0, 0.0, 0.0)
-    gl.glRotated(self.yRot , 0.0, 1.0, 0.0)
-    gl.glRotated(self.zRot , 0.0, 0.0, 1.0)
+    gl.glTranslatef(0.0, 0.0, -10.0)
+    
+    gl.glScalef(1.2, 1.2, 1.2)
+    """
+    gl.glRotatef(self.qW , self.qX, self.qY, self.qZ)
+    """
+
+    
+    gl.glRotatef(self.rX , 1.0, 0.0, 0.0)
+    gl.glRotatef(self.rY , 0.0, 1.0, 0.0)
+    gl.glRotatef(self.rZ , 0.0, 0.0, 1.0)
+    """
+
+
+    
+    gl.glRotatef(self.xRot , 1.0, 0.0, 0.0)
+    gl.glRotatef(self.yRot , 0.0, 1.0, 0.0)
+    gl.glRotatef(self.zRot , 0.0, 0.0, 1.0)
+    
+    print ("paint", self.xRot, self.yRot,self.zRot)
+    """
+
     gl.glCallList(self.object)
     gl.glMatrixMode(gl.GL_MODELVIEW)
     gl.glPopMatrix()

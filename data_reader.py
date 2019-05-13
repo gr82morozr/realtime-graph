@@ -175,20 +175,13 @@ class DataReader(multiprocessing.Process):
     # 
     #rawtext = ''
 
-    yaw_matched = tb.re_findall   ('Yaw=(\-*\d+\.\d*)/i',   rawdata)
-    
-    
-    print (yaw_matched)
-    exit(1)
-    
-    pitch_matched = tb.re_findall ('Pitch=(\-*\d+\.\d*)/i', rawdata)
-    roll_matched = tb.re_findall  ('Roll=(\-*\d+\.\d*)/i',  rawdata)
-    mappeddata = {
-      "Yaw"     : float(yaw_matched[0][0]),
-      "Pitch"   : float(pitch_matched[0][0]),
-      "Roll"    : float(roll_matched[0][0])
-    }
-    print (mappeddata)
+    #yaw_matched   = tb.re_findall    ('Yaw=(\-*\d+\.\d*)/i',   rawdata)
+    #pitch_matched = tb.re_findall ('Pitch=(\-*\d+\.\d*)/i', rawdata)
+    #roll_matched  = tb.re_findall  ('Roll=(\-*\d+\.\d*)/i',  rawdata)
+    mappeddata = {}
+    for (k,v) in tb.re_findall ('(\w+)\=(\-*\d+\.\d*)', rawdata) :
+      mappeddata[k] = float(v)
+
     return mappeddata
     # =========================================================
  
@@ -215,7 +208,7 @@ class DataReader(multiprocessing.Process):
         self.output_rate = 9999
       if self.output_rate <= self.config['throttle']['output_rate'] :
         self.q_out.put(self.mappeddata)
-        print (self.mappeddata)
+        #print (self.mappeddata)
         self.output_time_prev  = self.output_time
     else:
       self.q_out.put(self.mappeddata)
