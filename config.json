@@ -54,7 +54,7 @@
   "GyroMonitor" : {
     "window_w"        : 600,
     "window_h"        : 400,
-    "object_file"     : "shuttle4.obj",
+    "object_file"     : "shuttle3d.obj",
     "rotation"        : {
                           "E" : "Euler Angle" ,
                           "Q" : "Quaternion"  ,

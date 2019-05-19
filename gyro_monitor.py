@@ -6,12 +6,15 @@ import OpenGL.GL as gl
 import py3toolbox as tb
 import multiprocessing as mp
 import data_reader as dr
+import PyQt5 as pg
+
 
 
 from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTimer)
 from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfaceFormat)
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
-
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
 
 # Rotation Setting 
 
@@ -25,12 +28,14 @@ class Gyro3D(QOpenGLWidget):
   def __init__(self,  q_in=None):
     super(Gyro3D, self).__init__()
     self.config = get_config()['GyroMonitor']
-    self.rotation = 'E'
     self.q_in   = q_in
     self.object = 0
-    self.xRot   = 0
-    self.yRot   = 0
-    self.zRot   = 0
+    
+    self.type   = ""
+
+    self.rX   = 0
+    self.rY   = 0
+    self.rZ   = 0
 
     self.qW     = 0
     self.qX     = 0
@@ -40,6 +45,12 @@ class Gyro3D(QOpenGLWidget):
     self.rX     = 0
     self.rY     = 0
     self.rZ     = 0
+
+
+    self.Yaw    = 0
+    self.Pitch  = 0
+    self.Roll   = 0
+
 
     self.trolltechGreen  = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
     self.trolltechPurple = QColor.fromCmykF(0.39, 0.39, 0.0, 0.0)
@@ -54,32 +65,43 @@ class Gyro3D(QOpenGLWidget):
     self.readDataTimer.timeout.connect(self.readData)
     self.readDataTimer.start(15)
 
-    self.setAutoFillBackground(False)
+    self.setAutoFillBackground(True)
     self.setMinimumSize(200, 200)
     self.setWindowTitle("Gyro 3D Real-time Monitor")
     self.time = time.time()
+
+
+
+
 
   def readData(self):
     if self.q_in.qsize()>0 :
       try:
         data = self.q_in.get()
+        print ("read ", data)
         #self.setXRotation(data['yaw'])
         #self.setYRotation(data['roll'])
         #self.setZRotation(data['pitch'])
-        """
-        self.qW     = data['qW']
-        self.qX     = data['qX']
-        self.qY     = data['qY']
-        self.qZ     = data['qZ']
-        """
-        self.rX     = data['rX']
-        self.rY     = data['rY']
-        self.rZ     = data['rZ']
-      
-        #self.setXRotation(data['rX'])
-        #self.setYRotation(data['rY'])
-        #self.setZRotation(data['rZ'])
-        print ("read ", data)
+
+
+        self.type = data['Type']
+
+        if  self.type == 'QUATERNION' :
+          self.qW     = data['qW'] * 180 / 3.1415926
+          self.qX     = data['qX']
+          self.qY     = data['qY']
+          self.qZ     = data['qZ']
+
+        elif self.type == 'EULER' :
+          self.rX     = data['rX']
+          self.rY     = data['rY']
+          self.rZ     = data['rZ']
+
+        elif self.type == 'YPR' :
+          self.Yaw    = data['Yaw']
+          self.Pitch  = data['Pitch']
+          self.Roll   = data['Roll']
+ 
       except:
         pass
     
@@ -87,18 +109,18 @@ class Gyro3D(QOpenGLWidget):
     
   def setXRotation(self, angle):
     angle = self.normalizeAngle(angle)
-    if angle != self.xRot:
-      self.xRot = angle
+    if angle != self.rX:
+      self.rX = angle
 
   def setYRotation(self, angle):
     angle = self.normalizeAngle(angle)
-    if angle != self.yRot:
-      self.yRot = angle
+    if angle != self.rY:
+      self.rY = angle
 
   def setZRotation(self, angle):
     angle = self.normalizeAngle(angle)
-    if angle != self.zRot:
-      self.zRot = angle
+    if angle != self.rZ:
+      self.rZ = angle
 
   def initializeGL(self):
     self.object = self.makeObject()
@@ -111,16 +133,18 @@ class Gyro3D(QOpenGLWidget):
     dy = event.y() - self.lastPos.y()
 
     if event.buttons() & Qt.LeftButton:
-      self.setXRotation(self.xRot + 8 * dy)
-      self.setYRotation(self.yRot + 8 * dx)
+      self.setXRotation(self.rX + 8 * dy)
+      self.setYRotation(self.rY + 8 * dx)
     elif event.buttons() & Qt.RightButton:
-      self.setXRotation(self.xRot + 8 * dy)
-      self.setZRotation(self.zRot + 8 * dx)
+      self.setXRotation(self.rX + 8 * dy)
+      self.setZRotation(self.rZ + 8 * dx)
 
     self.lastPos = event.pos()
 
   def paintEvent(self, event):
-    fps = 1 / (time.time() - self.time)
+    fps = int(1 / (time.time() - self.time))
+    self.setWindowTitle("Gyro 3D Real-time Monitor : FPS = " + str(fps) + "\t Queue = " + str(self.q_in.qsize()) )
+
     self.time = time.time()
     self.makeCurrent()
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -138,24 +162,21 @@ class Gyro3D(QOpenGLWidget):
     gl.glTranslatef(0.0, 0.0, -10.0)
     
     gl.glScalef(1.2, 1.2, 1.2)
-    """
-    gl.glRotatef(self.qW , self.qX, self.qY, self.qZ)
-    """
-
-    
-    gl.glRotatef(self.rX , 1.0, 0.0, 0.0)
-    gl.glRotatef(self.rY , 0.0, 1.0, 0.0)
-    gl.glRotatef(self.rZ , 0.0, 0.0, 1.0)
-    """
 
 
+    if  self.type == 'QUATERNION' :
+      gl.glRotatef(self.qW        , self.qY, self.qZ, self.qX)
+    elif self.type == 'EULER' :
+      gl.glRotatef(self.rX        , 1.0, 0.0, 0.0)
+      gl.glRotatef(self.rY        , 0.0, 1.0, 0.0)
+      gl.glRotatef(self.rZ        , 0.0, 0.0, 1.0)
+    elif self.type == 'YPR' :
+      gl.glRotatef(self.Roll      , 1.0, 0.0, 0.0)
+      gl.glRotatef(self.Yaw       , 0.0, 1.0, 0.0)
+      gl.glRotatef(self.Pitch     , 0.0, 0.0, 1.0)
+
     
-    gl.glRotatef(self.xRot , 1.0, 0.0, 0.0)
-    gl.glRotatef(self.yRot , 0.0, 1.0, 0.0)
-    gl.glRotatef(self.zRot , 0.0, 0.0, 1.0)
     
-    print ("paint", self.xRot, self.yRot,self.zRot)
-    """
 
     gl.glCallList(self.object)
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -170,7 +191,7 @@ class Gyro3D(QOpenGLWidget):
     pass
     
   def sizeHint(self):
-    return QSize(600, 600)
+    return QSize(800, 600)
 
 
   def makeObject(self):
@@ -243,7 +264,7 @@ class GyroMonitor(mp.Process):
 
 
 if __name__ == '__main__':
-  q_data = mp.Queue()  
+  q_data = mp.Queue()
   gm = GyroMonitor(q_data)
   dr = dr.DataReader(q_data)
   gm.start()

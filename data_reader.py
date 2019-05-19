@@ -173,12 +173,14 @@ class DataReader(multiprocessing.Process):
     # map raw data to json format
     # this needs to be customized for your own project
     # 
-    #rawtext = ''
 
-    #yaw_matched   = tb.re_findall    ('Yaw=(\-*\d+\.\d*)/i',   rawdata)
-    #pitch_matched = tb.re_findall ('Pitch=(\-*\d+\.\d*)/i', rawdata)
-    #roll_matched  = tb.re_findall  ('Roll=(\-*\d+\.\d*)/i',  rawdata)
     mappeddata = {}
+
+    # read the data type
+    for t in tb.re_findall ('^(\w+):', rawdata) :
+      mappeddata['Type'] = t
+
+    # read the data
     for (k,v) in tb.re_findall ('(\w+)\=(\-*\d+\.\d*)', rawdata) :
       mappeddata[k] = float(v)
 
@@ -307,7 +309,7 @@ class DataReader(multiprocessing.Process):
 
 if __name__ == '__main__':   
   q_data = multiprocessing.Queue()  
-  dr     = DataReader(q_data)
+  dr = DataReader(q_data)
   dr.start()
   
     
