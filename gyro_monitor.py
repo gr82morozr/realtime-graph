@@ -14,7 +14,7 @@ from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTim
 from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfaceFormat)
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtCore
+#from pyqtgraph.Qt import QtGui, QtCore
 
 # Rotation Setting 
 
@@ -69,9 +69,6 @@ class Gyro3D(QOpenGLWidget):
     self.setMinimumSize(200, 200)
     self.setWindowTitle("Gyro 3D Real-time Monitor")
     self.time = time.time()
-
-
-
 
 
   def readData(self):
