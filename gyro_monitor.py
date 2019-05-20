@@ -98,7 +98,8 @@ class Gyro3D(QOpenGLWidget):
           self.Yaw    = data['Yaw']
           self.Pitch  = data['Pitch']
           self.Roll   = data['Roll']
- 
+
+
       except:
         pass
     
@@ -261,12 +262,12 @@ class GyroMonitor(mp.Process):
 
 
 if __name__ == '__main__':
-  q_data = mp.Queue()
-  gm = GyroMonitor(q_data)
-  dr = dr.DataReader(q_data)
-  gm.start()
-  dr.start()  
-  
+  #q_data = mp.Queue()
+  #gm = GyroMonitor(q_data)
+  #dr = dr.DataReader(q_data)
+  #gm.start()
+  #dr.start()  
+  pass
   
 
   
