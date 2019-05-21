@@ -18,20 +18,13 @@ import pyqtgraph as pg
 from random import randint
 from multiprocessing import Process, Pipe
 from pyqtgraph.Qt import QtGui, QtCore
+from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTimer)
 from collections import deque , defaultdict
 
 def get_config():
   config = {
     '_DATA_SOURCE_'   : ['SERIAL', 'FILE', 'NETWORK'],
     'DATA_SOURCE'     : 'FILE',
-
-    'NETWORK_HOST'    : '192.168.1.142',
-    'NETWORK_PORT'    : 80,
-
-   
-    'SERIAL_PORT'     : '/dev/ttyUSB3',
-    'SERIAL_RATE'     : 500000,
-    'SERIAL_TIMEOUT'  : 1,
 
     'LOG_SOURCE_DATA' : False,
     'DATA_FEED_WAIT'  : True,
@@ -212,14 +205,7 @@ class GraphMonitor(multiprocessing.Process):
       
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
+  g    = GraphMonitor()
+  g.start()
 
-  # Data Reader
-  data_q   = multiprocessing.JoinableQueue()
-  #reader_pipe, visualizer_conn = Pipe()  
-  
-  data_reader = DataReader(out_q=data_q)
-  data_reader.start()
-
-  # Visulizer
-  p = Visualizer(in_q = data_q)
-  p.start()
+  pass

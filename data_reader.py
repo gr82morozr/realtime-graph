@@ -129,7 +129,7 @@ class Logger(multiprocessing.Process):
         
         if (time.time() - self.timer) > 10:  # write log every 10 seconds
           for log_file in self.log_messages.keys():
-            tb.write_file(file_name=log_file, text = '\n'.join(self.log_messages[log_file]), mode='a')
+            tb.write_file(file_name=log_file, text = '\n'.join(self.log_messages[log_file]) , mode='a')
             self.log_messages[log_file] = []
           self.timer = time.time()
       except :
@@ -143,10 +143,10 @@ class Logger(multiprocessing.Process):
 #
 # =================================================
 class DataReader(multiprocessing.Process):
-  def __init__(self, q_out):
+  def __init__(self, out_queues):
     multiprocessing.Process.__init__(self)
 
-    self.q_out        = q_out
+    self.out_queues   = out_queues
     self.q_log        = multiprocessing.Queue()  
     self.config       = get_config()['DataReader']
     self.rawdata      = ""
@@ -209,11 +209,11 @@ class DataReader(multiprocessing.Process):
       else:
         self.output_rate = 9999
       if self.output_rate <= self.config['throttle']['output_rate'] :
-        self.q_out.put(self.mappeddata)
-        #print (self.mappeddata)
+        for q in self.out_queues:   q.put(self.mappeddata)
+        print (self.mappeddata)
         self.output_time_prev  = self.output_time
     else:
-      self.q_out.put(self.mappeddata)
+      for q in self.out_queues:   q.put(self.mappeddata)
 
   def read_from_file(self):  
     file = self.config['channels']['FILE']['name']
@@ -309,7 +309,7 @@ class DataReader(multiprocessing.Process):
 
 if __name__ == '__main__':   
   q_data = multiprocessing.Queue()  
-  dr = DataReader(q_data)
+  dr = DataReader([q_data])
   dr.start()
   
     

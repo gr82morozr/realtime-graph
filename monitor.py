@@ -9,12 +9,12 @@ import graph_monitor    as graph
 
 
 if __name__ == '__main__':
-  q_data = mp.Queue()
-  data_reader    = dr.DataReader(q_data)
-  gyro_monitor   = gyro.GyroMonitor(q_data)
-  graph_monitor  = graph.GraphMonitor(q_data)
+  data_queues = [mp.Queue(), mp.Queue()]
+  data_reader    = dr.DataReader(data_queues)
+  gyro_monitor   = gyro.GyroMonitor(data_queues[0])
+  graph_monitor  = graph.GraphMonitor(data_queues[1])
 
   gyro_monitor.start()
-  graph_monitor.start()
+  #graph_monitor.start()
   data_reader.start()  
   

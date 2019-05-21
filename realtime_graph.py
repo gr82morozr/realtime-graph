@@ -29,8 +29,8 @@ def get_config():
     'NETWORK_PORT'    : 80,
 
    
-    'SERIAL_PORT'     : '/dev/ttyUSB3',
-    'SERIAL_RATE'     : 500000,
+    'SERIAL_PORT'     : 'COM3',
+    'SERIAL_RATE'     : 115200,
     'SERIAL_TIMEOUT'  : 1,
 
     'LOG_SOURCE_DATA' : False,
