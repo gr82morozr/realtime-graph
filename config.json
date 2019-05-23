@@ -1,11 +1,11 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "SERIAL",
+    "feed_channel"    : "FILE",
     
     "throttle" : {
-      "enabled" : true,
-      "output_rate" : 60
+      "enabled"     : false,
+      "rate_limit"  : 60
     },
     
     "channels" : {
@@ -62,9 +62,12 @@
     }
   },
 
-
   "GraphMonitor" : {
+    "data_feed_wait"    : true,
+    "refresh_rate"      : 20,
+    "win_title"         : "Realtime Data Visualizer",
     "layouts"           : {
+      "win_size"        : [1400,800],
       "win_layout"      : [5,3],
       "boards"          : { 
         "1"   : { "layout" : [1,1,1,1], "max_entries" : 100 },

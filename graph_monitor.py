@@ -17,16 +17,18 @@ import py3toolbox as tb
 import pyqtgraph as pg
 from random import randint
 from multiprocessing import Process, Pipe
-from pyqtgraph.Qt import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTimer)
 from collections import deque , defaultdict
 
-def get_config():
-  config = {
-    '_DATA_SOURCE_'   : ['SERIAL', 'FILE', 'NETWORK'],
-    'DATA_SOURCE'     : 'FILE',
+module_name = 'GraphMonitor'
 
-    'LOG_SOURCE_DATA' : False,
+def get_config():
+  return tb.load_json('./config.json')[module_name]
+
+
+def get_config1():
+  config = {
     'DATA_FEED_WAIT'  : True,
     'DROP_FRAME'      : True,
     'REFRESH_RATE'    : 20,
@@ -38,11 +40,10 @@ def get_config():
 
    
     'DEBUG_MODE'      : False,
-    'ANTIALIAS'       : True,
     'PEN_WIDTH'       : 0,
     'WIN_SIZE_X'      : 1400,
     'WIN_SIZE_Y'      : 800,
-    'WIN_TITLE'       : 'Realtime Data Visualizer',
+    'win_title'       : 'Realtime Data Visualizer',
     'CUSTOM_CONFIG'   : False,
     
     'layouts'          : {
@@ -107,26 +108,24 @@ def get_config():
 class GraphMonitor(multiprocessing.Process):
   def __init__(self,in_q=None):
     multiprocessing.Process.__init__(self)
-    self.config = get_config()
-    self.in_q   = in_q
+    self.config     = get_config()
+    self.in_q       = in_q
     self.trace_data = {}
 
     # data stuff
     self.fps = 0   
-        
-    # PyQtGRaph stuff
-    self.app = QtGui.QApplication([])
-    self.win = pg.GraphicsWindow(title="Basic plotting")
-    self.win.addLayout(row=self.config['layouts']['win_layout'][0], col=self.config['layouts']['win_layout'][1]) 
-    self.win.resize(self.config['WIN_SIZE_X'],self.config['WIN_SIZE_Y'])
-    self.win.setWindowTitle(self.config['WIN_TITLE'])
-    pg.setConfigOptions(antialias=self.config['ANTIALIAS'])
-    self.init_plots()
 
     # for FPS calculation
     self.last  = time.time()
 
   def init_plots(self):
+    self.app = QtGui.QApplication([])
+    self.win = pg.GraphicsWindow(title="Basic plotting")
+    self.win.addLayout(row=self.config['layouts']['win_layout'][0], col=self.config['layouts']['win_layout'][1]) 
+    self.win.resize(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1])
+
+    self.win.setWindowTitle(self.config['win_title'])
+    pg.setConfigOptions(antialias=True)    
     self.boards = {}
     for b in self.config['layouts']['boards'].keys():
       cfg = self.config['layouts']['boards'][b]['layout']
@@ -149,29 +148,32 @@ class GraphMonitor(multiprocessing.Process):
     self.trace_data[key]['color']   = self.config['data_config'][key]['color']
     self.trace_data[key]['x_data']  = np.arange(0,max_entries,1)
     self.trace_data[key]['y_data']  = deque ([0] * max_entries, maxlen = max_entries)
-    self.trace_data[key]['plot']    = self.boards[self.config['data_config'][key]['board_id']].plot(pen=pg.mkPen(self.trace_data[key]['color'], width=self.config['PEN_WIDTH']), name=key)
+    self.trace_data[key]['plot']    = self.boards[self.config['data_config'][key]['board_id']].plot(pen=pg.mkPen(self.trace_data[key]['color'], width=1), name=key)
     
   
   # update FPS  
   def update_fps(self):
     self.fps = int(1.0/(time.time() - self.last + 0.00001 ))
     self.last = time.time()
-    self.win.setWindowTitle(self.config['WIN_TITLE'] + ' : ' + str(self.fps ) + ' FPS, Q = ' + str(self.in_q.qsize())  )
+    self.win.setWindowTitle(self.config['win_title'] + ' : ' + str(self.fps ) + ' FPS, Q = ' + str(self.in_q.qsize())  )
     #print (self.fps)
 
   # update data for charts  
   def update(self):
+    
     # wait for data feed
-    if self.config['DATA_FEED_WAIT'] == True:
-      data = json.loads(self.in_q.get())
+    if self.config['data_feed_wait'] == True:
+      #rawdata = self.in_q.get()
+      #print (rawdata)
+      data = self.in_q.get()
       #data = json.loads(self.in_q.recv())
-      if self.config['DROP_FRAME'] == True and self.config['FILE_TEST'] == False and self.in_q.qsize() > int(self.fps / 8) :
-        return
+      #if self.config['DROP_FRAME'] == True and self.config['FILE_TEST'] == False and self.in_q.qsize() > int(self.fps / 8) :
+      #  return
       for k in data.keys():
         if k not in self.config['data_config']: continue
         if k not in self.trace_data :
           self.init_trace_data(k)
-        self.trace_data[k]['y_data'].append(float(data[k]))     
+        self.trace_data[k]['y_data'].append(float(data[k]))
     else :
       # NOT wait for data feed
       try :
@@ -191,19 +193,24 @@ class GraphMonitor(multiprocessing.Process):
      
     self.update_fps()
 
-  def start(self):
+  def run(self):
+    self.init_plots()
     # kick off the animation
+ 
     timer = QtCore.QTimer()
     timer.timeout.connect(self.update)
-    if self.config['DATA_FEED_WAIT'] == True:
+
+    if self.config['data_feed_wait'] == True:
       timer.start(0)
     else:
-      timer.start(self.config['REFRESH_RATE'])
-  
+      timer.start(self.config['refresh_rate'])
+
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
       QtGui.QApplication.instance().exec_() 
-      
-## Start Qt event loop unless running in interactive mode or using pyside.
+ 
+
+
+
 if __name__ == '__main__':
   g    = GraphMonitor()
   g.start()

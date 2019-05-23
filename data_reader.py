@@ -60,7 +60,11 @@ class TCPHandler(socketserver.StreamRequestHandler):
       q_thr.put(data)
       if 'quit' in data :  break
 
-
+# =================================================
+#
+# UDP request handler
+#
+# =================================================
 class UDPHandler(socketserver.DatagramRequestHandler):
   def handle(self):
     while True:
@@ -177,11 +181,11 @@ class DataReader(multiprocessing.Process):
     mappeddata = {}
 
     # read the data type
-    for t in tb.re_findall ('^(\w+):', rawdata) :
+    for t in tb.re_findall (r'^(\w+):', rawdata) :
       mappeddata['Type'] = t
 
     # read the data
-    for (k,v) in tb.re_findall ('(\w+)\=(\-*\d+\.\d*)', rawdata) :
+    for (k,v) in tb.re_findall (r'(\w+)\=\s*(\-*\d+\.\d*|\d*)', rawdata) :
       mappeddata[k] = float(v)
 
     return mappeddata
@@ -201,6 +205,8 @@ class DataReader(multiprocessing.Process):
     self.input_time_prev  = self.input_time
 
   def output_data (self):
+    self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
+    #print (self.mappeddata)
     self.get_input_rate()
     if self.config['throttle']['enabled'] == True:
       self.output_time   = time.time()
@@ -208,25 +214,32 @@ class DataReader(multiprocessing.Process):
         self.output_rate   = 1/(self.output_time - self.output_time_prev)
       else:
         self.output_rate = 9999
-      if self.output_rate <= self.config['throttle']['output_rate'] :
+      if self.output_rate <= self.config['throttle']['rate_limit'] :
         for q in self.out_queues:   q.put(self.mappeddata)
-        print (self.mappeddata)
         self.output_time_prev  = self.output_time
     else:
       for q in self.out_queues:   q.put(self.mappeddata)
 
+
+
+  ###############################################################
+  #
+  # Read data from File
+  #
+  ###############################################################
   def read_from_file(self):  
-    file = self.config['channels']['FILE']['name']
     data_lines = tb.read_file(file_name=self.config['channels']['FILE']['name'], return_type='list') 
     for line in data_lines:
       self.rawdata    = line
       self.mappeddata = self.mapdata(self.rawdata)
-      self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
       self.output_data()
       
 
-
- 
+  ###############################################################
+  #
+  # Read data from Serial Port
+  #
+  ###############################################################
   def read_from_serial(self):  
     ser = serial.Serial(  port      = self.config['channels']['SERIAL']['port']       , 
                           baudrate  = self.config['channels']['SERIAL']['baud_rate']  , 
@@ -249,8 +262,6 @@ class DataReader(multiprocessing.Process):
         if one_byte == b"\r" and ser.read(1) == b"\n": 
           self.count +=1
           self.mappeddata = self.mapdata(self.rawdata)
-          self.log({ 'log_file' : self.config['logger']['data_input']  ,  'log_content' : self.rawdata    })
-          self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
           self.output_data()
           self.rawdata = "" 
         else:
@@ -261,20 +272,38 @@ class DataReader(multiprocessing.Process):
         pass         
 
 
-
+  ###############################################################
+  #
+  # Read data from TCP Server
+  #
+  ###############################################################
   def read_from_tcpserver(self):
     pass
-  
 
+  def read_from_udpserver(self):
+    pass
+  
+  def read_from_mqtt(self):
+    pass
+  
+  ###############################################################
+  #
+  # Read data from TCP Client
+  #
+  ###############################################################
   def read_from_tcpclient(self) : 
     tcpsvr = TCPServer(host = '127.0.0.1', port = self.config['channels']['TCP_CLT']['port'])
     tcpsvr.start()
     while True:
       self.rawdata = q_thr.get()
       self.mappeddata = self.mapdata(self.rawdata)
-      self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
       self.output_data() 
 
+  ###############################################################
+  #
+  # Read data from UDP Client
+  #
+  ###############################################################
   def read_from_udpclient(self) : 
     udpsvr = UDPServer(host =  self.config['channels']['UDP_CLT']['host'], port = self.config['channels']['UDP_CLT']['port'])
     udpsvr.start()
@@ -303,7 +332,6 @@ class DataReader(multiprocessing.Process):
       self.read_from_udpclient()
     elif self.config['feed_channel'] == 'MQTT':
       self.read_from_mqtt()     
-
 
 
 
