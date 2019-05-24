@@ -6,15 +6,15 @@ import OpenGL.GL as gl
 import py3toolbox as tb
 import multiprocessing as mp
 import data_reader as dr
-import PyQt5 as pg
 
-
-
+import pyqtgraph as pg
+from PyQt5 import QtCore,QtGui,QtWidgets
 from PyQt5.QtCore import (QPoint, QPointF, QRect, QRectF, QSize, Qt, QTime, QTimer)
 from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfaceFormat)
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
-import pyqtgraph as pg
-#from pyqtgraph.Qt import QtGui, QtCore
+
+from pyquaternion import Quaternion
+
 
 # Rotation Setting 
 
@@ -75,7 +75,6 @@ class Gyro3D(QOpenGLWidget):
     if self.q_in.qsize()>0 :
       try:
         data = self.q_in.get()
-        print ("read ", data)
         #self.setXRotation(data['yaw'])
         #self.setYRotation(data['roll'])
         #self.setZRotation(data['pitch'])
@@ -84,7 +83,7 @@ class Gyro3D(QOpenGLWidget):
         self.type = data['Type']
 
         if  self.type == 'QUATERNION' :
-          self.qW     = data['qW'] * 180 / 3.1415926
+          self.qW     = data['qW']
           self.qX     = data['qX']
           self.qY     = data['qY']
           self.qZ     = data['qZ']
@@ -142,7 +141,6 @@ class Gyro3D(QOpenGLWidget):
   def paintEvent(self, event):
     fps = int(1 / (time.time() - self.time))
     self.setWindowTitle("Gyro 3D Real-time Monitor : FPS = " + str(fps) + "\t Queue = " + str(self.q_in.qsize()) )
-
     self.time = time.time()
     self.makeCurrent()
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -158,12 +156,15 @@ class Gyro3D(QOpenGLWidget):
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
     gl.glTranslatef(0.0, 0.0, -10.0)
-    
     gl.glScalef(1.2, 1.2, 1.2)
 
 
     if  self.type == 'QUATERNION' :
-      gl.glRotatef(self.qW        , self.qY, self.qZ, self.qX)
+      quat = Quaternion (self.qW , self.qY, self.qZ, self.qX)
+      angle = quat.angle * 180 / math.pi
+      u = quat.axis 
+      gl.glRotatef(angle   , u[0], u[1], u[2])
+
     elif self.type == 'EULER' :
       gl.glRotatef(self.rX        , 1.0, 0.0, 0.0)
       gl.glRotatef(self.rY        , 0.0, 1.0, 0.0)
@@ -173,8 +174,6 @@ class Gyro3D(QOpenGLWidget):
       gl.glRotatef(self.Yaw       , 0.0, 1.0, 0.0)
       gl.glRotatef(self.Pitch     , 0.0, 0.0, 1.0)
 
-    
-    
 
     gl.glCallList(self.object)
     gl.glMatrixMode(gl.GL_MODELVIEW)

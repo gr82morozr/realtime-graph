@@ -206,7 +206,6 @@ class DataReader(multiprocessing.Process):
 
   def output_data (self):
     self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
-    #print (self.mappeddata)
     self.get_input_rate()
     if self.config['throttle']['enabled'] == True:
       self.output_time   = time.time()

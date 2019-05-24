@@ -1,10 +1,10 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "FILE",
+    "feed_channel"    : "SERIAL",
     
     "throttle" : {
-      "enabled"     : false,
+      "enabled"     : true,
       "rate_limit"  : 60
     },
     
@@ -52,8 +52,6 @@
   },
   
   "GyroMonitor" : {
-    "window_w"        : 600,
-    "window_h"        : 400,
     "object_file"     : "shuttle3d.obj",
     "rotation"        : {
                           "E" : "Euler Angle" ,
@@ -96,6 +94,11 @@
       "ay"      : { "board_id"    : "2", "color" : "g"  },
       "az"      : { "board_id"    : "3", "color" : "r"  },
 
+      "qX"      : { "board_id"    : "1", "color" : "b"  },
+      "qY"      : { "board_id"    : "2", "color" : "g"  },
+      "qZ"      : { "board_id"    : "3", "color" : "r"  },
+
+
       "gx"      : { "board_id"    : "4", "color" : "c"  },
       "gy"      : { "board_id"    : "5", "color" : "m"  },
       "gz"      : { "board_id"    : "6", "color" : "y"  },
@@ -103,6 +106,7 @@
       "ax_raw"  : { "board_id"    : "1", "color" : [60,60,60]   },
       "ay_raw"  : { "board_id"    : "2", "color" : [60,60,60]   },
       "az_raw"  : { "board_id"    : "3", "color" : [60,60,60]   },
+
 
       "gx_raw"  : { "board_id"    : "4", "color" : [60,60,60]   },
       "gy_raw"  : { "board_id"    : "5", "color" : [60,60,60]   },
@@ -116,6 +120,7 @@
       "err_I"   : { "board_id"    :"11", "color" : "g"   },
       "err_D"   : { "board_id"    :"12", "color" : "b"   },
 
+      "qW"       : { "board_id"  :"13", "color" : "w"   },
       "Error"     : { "board_id"  :"13", "color" : "w"   },
       "PID"       : { "board_id"  :"13", "color" : "r"   },
       "g_int"     : { "board_id"  :"13", "color" : "g"   },
