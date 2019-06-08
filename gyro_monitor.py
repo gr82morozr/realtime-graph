@@ -261,6 +261,13 @@ class GyroMonitor(mp.Process):
 
 
 if __name__ == '__main__':
+  data_queues = [mp.Queue(), mp.Queue()]
+  data_reader    = dr.DataReader(data_queues)
+  gyro_monitor   = GyroMonitor(data_queues[0])
+
+  gyro_monitor.start()
+  data_reader.start()  
+  
   #q_data = mp.Queue()
   #gm = GyroMonitor(q_data)
   #dr = dr.DataReader(q_data)

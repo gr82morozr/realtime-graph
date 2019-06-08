@@ -8,13 +8,15 @@ import sys
 import re
 import time
 import json
-import multiprocessing
+import multiprocessing as mp
 import collections
 import serial
 import socket
 
 import py3toolbox as tb
 import pyqtgraph as pg
+import data_reader as dr
+
 from random import randint
 from multiprocessing import Process, Pipe
 from PyQt5 import QtGui, QtCore
@@ -26,9 +28,9 @@ def get_config():
   return tb.load_json('./config.json')[module_name]
 
 
-class GraphMonitor(multiprocessing.Process):
+class GraphMonitor(mp.Process):
   def __init__(self,in_q=None):
-    multiprocessing.Process.__init__(self)
+    mp.Process.__init__(self)
     self.config     = get_config()
     self.in_q       = in_q
     self.trace_data = {}
@@ -129,7 +131,10 @@ class GraphMonitor(multiprocessing.Process):
 
 
 if __name__ == '__main__':
-  g    = GraphMonitor()
-  g.start()
+  data_queues = [mp.Queue(), mp.Queue()]
+  data_reader    = dr.DataReader(data_queues)
+  graph_monitor  = GraphMonitor(data_queues[1])
 
-  pass
+  graph_monitor.start()
+  data_reader.start()  
+  
