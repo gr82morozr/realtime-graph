@@ -69,7 +69,6 @@ class UDPHandler(socketserver.DatagramRequestHandler):
   def handle(self):
     while True:
       data = self.rfile.readline().strip().decode('utf-8')
-      print (data)
       if not data: break        
       q_thr.put(data)
       if 'quit' in data :  break
@@ -185,7 +184,7 @@ class DataReader(multiprocessing.Process):
       mappeddata['Type'] = t
 
     # read the data
-    for (k,v) in tb.re_findall (r'(\w+)\=\s*(\-*\d+\.\d*|\d*)', rawdata) :
+    for (k,v) in tb.re_findall (r'(\w+)\=\s*(\-*\d+\.*\d*|\d*)', rawdata) :
       mappeddata[k] = float(v)
 
     return mappeddata
@@ -205,7 +204,6 @@ class DataReader(multiprocessing.Process):
     self.input_time_prev  = self.input_time
 
   def output_data (self):
-    print (self.mappeddata);
     self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
     self.get_input_rate()
     if self.config['throttle']['enabled'] == True:
@@ -290,7 +288,8 @@ class DataReader(multiprocessing.Process):
           if len(self.rawdata.rstrip())==0 : continue
           self.mappeddata = self.mapdata(self.rawdata)
           self.output_data()            
-      except Exception:
+      except Exception as e:
+        print(str(e))
         pass
     
 
