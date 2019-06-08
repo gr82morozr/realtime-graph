@@ -205,6 +205,7 @@ class DataReader(multiprocessing.Process):
     self.input_time_prev  = self.input_time
 
   def output_data (self):
+    print (self.mappeddata);
     self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
     self.get_input_rate()
     if self.config['throttle']['enabled'] == True:
@@ -277,7 +278,21 @@ class DataReader(multiprocessing.Process):
   #
   ###############################################################
   def read_from_tcpserver(self):
-    pass
+    while True:
+      try :
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.settimeout(1)
+        client.connect((self.config['channels']['TCP_SVR']['host'] , self.config['channels']['TCP_SVR']['port'] ))
+        print (self.config['channels']['TCP_SVR']['host'] + ":" + str(self.config['channels']['TCP_SVR']['port']) );
+        print ("Connected.");
+        while True:
+          self.rawdata  = client.recv(4096).decode("utf-8")
+          if len(self.rawdata.rstrip())==0 : continue
+          self.mappeddata = self.mapdata(self.rawdata)
+          self.output_data()            
+      except Exception:
+        pass
+    
 
   def read_from_udpserver(self):
     pass

@@ -1,7 +1,7 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "SERIAL",
+    "feed_channel"    : "TCP_SVR",
     
     "throttle" : {
       "enabled"     : true,
@@ -21,8 +21,8 @@
       },
       
       "TCP_SVR" : {
-        "host"      : "192.168.1.200",
-        "port"      : 12345
+        "host"      : "192.168.1.141",
+        "port"      : 8088
       },
       
       "TCP_CLT" : {
@@ -30,12 +30,12 @@
       },
       
       "UDP_SVR" : {
-        "port"      : 12345
+        "port"      : 8088
       },
       
       "UDP_CLT" : {
-        "host"      : "192.168.1.200",
-        "port"      : 10123
+        "host"      : "192.168.1.141",
+        "port"      : 8088
       },
       
       "MQTT"       : {
@@ -122,7 +122,7 @@
 
       "qW"       : { "board_id"  :"13", "color" : "w"   },
       "Error"     : { "board_id"  :"13", "color" : "w"   },
-      "PID"       : { "board_id"  :"13", "color" : "r"   },
+      "speed"     : { "board_id"  :"13", "color" : "r"   },
       "g_int"     : { "board_id"  :"13", "color" : "g"   },
       "g_pitch"   : { "board_id"  :"13", "color" : "b"   }
     }
