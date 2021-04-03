@@ -1,17 +1,28 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "TCP_SVR",
+    "feed_channel"    : "SERIAL",
     
     "throttle" : {
-      "enabled"     : true,
-      "rate_limit"  : 60
+      "enabled"     : false,
+      "rate_limit"  : 20
+    },
+    
+    "noise": {
+      "_desc_" : "Normally not used, mainly for dummy signals",
+      "level" : 0.15,
+      "mean"  : 0.0,
+      "sigma" : 0.1
     },
     
     "channels" : {
       
       "FILE": {
         "name" : "./sample.data"
+      },
+      
+      "MOUSE": {
+        "sample_rate" : 60
       },
       
       "SERIAL": {
@@ -51,32 +62,115 @@
     }
   },
   
-  "GyroMonitor" : {
-    "object_file"     : "shuttle3d.obj",
-    "rotation"        : {
-                          "E" : "Euler Angle" ,
-                          "Q" : "Quaternion"  ,
-                          "R" : "Regular XYZ" 
+  
+  
+  "DataLogger" : {
+  
+  },
+  
+  "DataProcessor" : {
+    "filter" : "NOFLTR_FOR_QUAT",
+    
+    "COMPLEMENTARY" :  {
+    
+    },
+    
+    "KALMAN" : {
+    
+    },
+    
+    "FOURIER": {
+    
+    },
+    
+    "LAPLACE" : {
+    
     }
+
+
+
+
+  },
+  
+  
+  "GyroMonitor" : {
+    "object_file"     : "3DModels/shuttle_3D.obj",
+    "demo_mode"       : true
   },
 
   "GraphMonitor" : {
-    "data_feed_wait"    : true,
-    "refresh_rate"      : 20,
+    "data_feed_wait"    : false,
+    "refresh_rate"      : 60,
     "win_title"         : "Realtime Data Visualizer",
     "layouts"           : {
-      "win_size"        : [1400,800],
+      "win_size"        : [1200,600],
       "win_layout"      : [1,1],
       "boards"          : { 
-        "1"   : { "layout" : [1,1,1,1], "max_entries" : 400 }
+        "1"   : { "layout" : [1,1,1,1], "max_entries" : 200 },
+        "2"   : { "layout" : [2,1,1,1], "max_entries" : 200 },
+        "3"   : { "layout" : [3,1,1,1], "max_entries" : 200 },
+        "4"   : { "layout" : [1,2,1,1], "max_entries" : 200 },
+        "5"   : { "layout" : [2,2,1,1], "max_entries" : 200 },
+        "6"   : { "layout" : [3,2,1,1], "max_entries" : 200 },          
+        "7"   : { "layout" : [1,3,1,1], "max_entries" : 200 },
+        "8"   : { "layout" : [2,3,1,1], "max_entries" : 200 },          
+        "9"   : { "layout" : [3,3,1,1], "max_entries" : 200 },
+        "10"  : { "layout" : [1,4,1,1], "max_entries" : 200 },
+        "11"  : { "layout" : [2,4,1,1], "max_entries" : 200 },          
+        "12"  : { "layout" : [3,4,1,1], "max_entries" : 200 }
       }
     },
+    
+    
+    "data_config1"   : { 
+      "Target"   : { "board_id"    : "1", "color" : "g"  },
+      "speedL"   : { "board_id"    : "1", "color" : "r"  },
+      "speedR"   : { "board_id"    : "1", "color" : "b"  },
+      "errorL"   : { "board_id"    : "2", "color" : "b"  },
+      "errorR"   : { "board_id"    : "3", "color" : "r"  },
+      "OutL"     : { "board_id"    : "4", "color" : "r"  },
+      "OutR"     : { "board_id"    : "5", "color" : "r"  }
+    },
   
+    "data_config2"   : { 
+      "Pitch"   : { "board_id"     : "1", "color" : "g"  },
+      "Out"     : { "board_id"    : "2", "color" : "b"  },
+      "p_Out"   : { "board_id"    : "3", "color" : "r"  },
+      "i_Out"   : { "board_id"    : "4", "color" : "r"  },
+      "d_Out"   : { "board_id"    : "5", "color" : "r"  },
+      "LSpeedTarget" :{ "board_id"    : "6", "color" : "r"  }
+    },
+    
+    "data_config_mouse"   : { 
+      "mouseX"  : { "board_id"    : "1", "color" : "g"  },
+      "mouseY"  : { "board_id"    : "2", "color" : "r"  }
+    },
   
-    "data_config"     : { 
-      "target"      : { "board_id"    : "1", "color" : "g"  },
-      "current"     : { "board_id"    : "1", "color" : "r"  }
+    "data_config_raw"   : { 
+      "aX"  :    { "board_id"    : "1",   "color" : "r"  },
+      "aY"  :    { "board_id"    : "1",   "color" : "g"  },
+      "aZ"  :    { "board_id"    : "1",   "color" : "m"  },
+      "gX"  :    { "board_id"    : "2",   "color" : "r"  },
+      "gY"  :    { "board_id"    : "2",   "color" : "g"  },
+      "gZ"  :    { "board_id"    : "2",   "color" : "m"  },
+      "mX"  :    { "board_id"    : "3",   "color" : "r"  },
+      "mY"  :    { "board_id"    : "3",   "color" : "g"  },
+      "mZ"  :    { "board_id"    : "3",   "color" : "m"  },
+      "Roll"  :  { "board_id"    : "10",  "color" : "r"  },
+      "Pitch" :  { "board_id"    : "11",  "color" : "g"  },
+      "Yaw"   :  { "board_id"    : "12",  "color" : "m"  }
+    },
+
+    "data_config"   : { 
+      "qW"  :    { "board_id"    : "1",   "color" : "r"  },
+      "qX"  :    { "board_id"    : "4",   "color" : "g"  },
+      "qY"  :    { "board_id"    : "7",   "color" : "m"  },
+      "qZ"  :    { "board_id"    : "10",   "color" : "r" },
+      "Roll"   : { "board_id"    : "2",   "color" : "r" },
+      "Pitch"  : { "board_id"    : "5",   "color" : "g" },
+      "Yaw"    : { "board_id"    : "8",   "color" : "b" }
     }
+
   }
 }
 

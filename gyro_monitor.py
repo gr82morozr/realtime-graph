@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-import math, random, re, time
+import math, re, time
+import random
 import OpenGL.GL as gl
 import py3toolbox as tb
 import multiprocessing as mp
@@ -58,12 +59,12 @@ class Gyro3D(QOpenGLWidget):
     self.animationTimer = QTimer()
     self.animationTimer.setSingleShot(False)
     self.animationTimer.timeout.connect(self.update)
-    self.animationTimer.start(10)
+    self.animationTimer.start(0)
 
     self.readDataTimer = QTimer()
     self.readDataTimer.setSingleShot(False)
     self.readDataTimer.timeout.connect(self.readData)
-    self.readDataTimer.start(15)
+    self.readDataTimer.start(0)
 
     self.setAutoFillBackground(True)
     self.setMinimumSize(200, 200)
@@ -75,23 +76,12 @@ class Gyro3D(QOpenGLWidget):
     if self.q_in.qsize()>0 :
       try:
         data = self.q_in.get()
-        #self.setXRotation(data['yaw'])
-        #self.setYRotation(data['roll'])
-        #self.setZRotation(data['pitch'])
-
-
         self.type = data['Type']
-
         if  self.type == 'QUATERNION' :
           self.qW     = data['qW']
           self.qX     = data['qX']
           self.qY     = data['qY']
           self.qZ     = data['qZ']
-
-        elif self.type == 'EULER' :
-          self.rX     = data['rX']
-          self.rY     = data['rY']
-          self.rZ     = data['rZ']
 
         elif self.type == 'YPR' :
           self.Yaw    = data['Yaw']
@@ -140,7 +130,7 @@ class Gyro3D(QOpenGLWidget):
 
   def paintEvent(self, event):
     fps = int(1 / (time.time() - self.time))
-    self.setWindowTitle("Gyro 3D Real-time Monitor : FPS = " + str(fps) + "\t Queue = " + str(self.q_in.qsize()) )
+    self.setWindowTitle("Gyro 3D Real-time Monitor : FPS = " + str(fps) + "   Q = " + str(self.q_in.qsize()) )
     self.time = time.time()
     self.makeCurrent()
     gl.glMatrixMode(gl.GL_MODELVIEW)
@@ -148,6 +138,7 @@ class Gyro3D(QOpenGLWidget):
     self.setClearColor(self.trolltechPurple.darker())
     gl.glShadeModel(gl.GL_SMOOTH)
     gl.glEnable(gl.GL_DEPTH_TEST)
+    #gl.glEnable(gl.GL_COLOR_MATERIAL)
     gl.glEnable(gl.GL_LIGHTING)
     gl.glEnable(gl.GL_LIGHT0)
     gl.glEnable(gl.GL_MULTISAMPLE)
@@ -160,19 +151,14 @@ class Gyro3D(QOpenGLWidget):
 
 
     if  self.type == 'QUATERNION' :
-      quat = Quaternion (self.qW , self.qY, self.qZ, self.qX)
+      quat = Quaternion (self.qW , self.qY, self.qZ, -self.qX)
       angle = quat.angle * 180 / math.pi
       u = quat.axis 
       gl.glRotatef(angle   , u[0], u[1], u[2])
-
-    elif self.type == 'EULER' :
-      gl.glRotatef(self.rX        , 1.0, 0.0, 0.0)
-      gl.glRotatef(self.rY        , 0.0, 1.0, 0.0)
-      gl.glRotatef(self.rZ        , 0.0, 0.0, 1.0)
     elif self.type == 'YPR' :
-      gl.glRotatef(self.Roll      , 1.0, 0.0, 0.0)
+      gl.glRotatef(self.Pitch     , 1.0, 0.0, 0.0) 
       gl.glRotatef(self.Yaw       , 0.0, 1.0, 0.0)
-      gl.glRotatef(self.Pitch     , 0.0, 0.0, 1.0)
+      gl.glRotatef(self.Roll      , 0.0, 0.0, 1.0)
 
 
     gl.glCallList(self.object)
@@ -219,7 +205,7 @@ class Gyro3D(QOpenGLWidget):
         gl.glVertex3f(vertices[int(v[0])-1][0],vertices[int(v[0])-1][1],vertices[int(v[0])-1][2])
         gl.glVertex3f(vertices[int(v[1])-1][0],vertices[int(v[1])-1][1],vertices[int(v[1])-1][2])
         gl.glVertex3f(vertices[int(v[2])-1][0],vertices[int(v[2])-1][1],vertices[int(v[2])-1][2])
-     
+        
    
     gl.glEnd()
     gl.glEndList()
@@ -252,7 +238,7 @@ class GyroMonitor(mp.Process):
     self.q_in = q_in
   
   def run(self):    
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = Gyro3D(self.q_in)
     window.show()
     sys.exit(app.exec_())
@@ -261,12 +247,76 @@ class GyroMonitor(mp.Process):
 
 
 if __name__ == '__main__':
-  data_queues = [mp.Queue(), mp.Queue()]
-  data_reader    = dr.DataReader(data_queues)
-  gyro_monitor   = GyroMonitor(data_queues[0])
+  config = get_config()
 
-  gyro_monitor.start()
-  data_reader.start()  
+  ## Demo Mode ##
+  if config['GyroMonitor']['demo_mode'] :
+    data_queue = mp.Queue()
+    gyro_monitor   = GyroMonitor(data_queue) 
+    gyro_monitor.start()
+    data = {
+      'Type'  : 'YPR',
+      'Roll'  :   0,
+      'Pitch' :   0,
+      'Yaw'   :   0
+    }
+    while True:
+      try :
+        tb.pause ("Change Roll from 0 ~ 360 degrees \n")
+        for r in range(0,360):
+          data['Roll']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        for r in range(360,0,-1):
+          data['Roll']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        tb.pause ("Change Pitch from 0 ~ 360 degrees \n")
+        for r in range(0,360):
+          data['Pitch']  = r
+          data_queue.put(data)
+          time.sleep(0.008)
+
+        for r in range(360,0,-1):
+          data['Pitch']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        tb.pause ("Change Yaw from 0 ~ 360 degrees \n")
+        for r in range(0,360):
+          data['Yaw']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        for r in range(360,0,-1):
+          data['Yaw']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        tb.pause ("Change Roll, Pitch Yaw  from 0 ~ 360 degrees \n")
+        for r in range(0,360):
+          data['Roll']  = r
+          data['Pitch']  = r
+          data['Yaw']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+
+        for r in range(360,0,-1):
+          data['Roll']  = r
+          data['Pitch']  = r
+          data['Yaw']  = r
+          data_queue.put(data)
+          time.sleep(0.01)
+        
+      except Exception as err:
+        break
+
+
+  
+    
+  
   
   #q_data = mp.Queue()
   #gm = GyroMonitor(q_data)

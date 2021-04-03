@@ -4,17 +4,30 @@ import sys
 import os
 import multiprocessing  as mp
 import data_reader      as dr
+import data_processor   as dp
 import gyro_monitor     as gyro
 import graph_monitor    as graph
 
 
 if __name__ == '__main__':
-  data_queues = [mp.Queue(), mp.Queue()]
-  data_reader    = dr.DataReader(data_queues)
-  gyro_monitor   = gyro.GyroMonitor(data_queues[0])
-  graph_monitor  = graph.GraphMonitor(data_queues[1])
+  try :
+    q_log     = mp.Queue()
+    q_dr_out  = mp.Queue()
+    qs_dp_out = [mp.Queue(), mp.Queue(), mp.Queue()]
+    
+    data_reader    = dr.DataReader(q_log=q_log,       q_out=q_dr_out)
+    data_processor = dp.DataProcessor(q_in=q_dr_out,  qs_out=qs_dp_out)
+    
+    
+    graph_monitor  = graph.GraphMonitor(qs_dp_out[0])
+    gyro_monitor   = gyro.GyroMonitor(qs_dp_out[1])
+    
 
-  gyro_monitor.start()
-  graph_monitor.start()
-  data_reader.start()  
-  
+    graph_monitor.start()
+    gyro_monitor.start()
+    
+    data_processor.start()
+    
+    data_reader.start()
+  except KeyboardInterrupt:
+    exit(1)         

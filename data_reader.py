@@ -11,6 +11,7 @@
 # Avaliable channels:
 # - File         : read data from file, normally for testing only
 # - Serial Port  : 
+# - Mouse        : Use mouse movements to generate random signals
 # - TCP Server
 # - TCP Client
 # - UCP Server
@@ -25,7 +26,7 @@
 
  
 import warnings
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
 
 import os,sys,time,json
 import collections
@@ -35,15 +36,25 @@ import queue
 import threading
 import multiprocessing 
 import socketserver
+import random
+import numpy as np
 import py3toolbox as tb
+import pyautogui
+
 
 
 q_thr = queue.Queue()
 
 
 
+def get_mouse_pos():
+  pos = pyautogui.position()
+  return (pos.x, pos.y)
+
+
 def get_config():
-  return tb.load_json('./config.json')
+  config = tb.load_json('./config.json')
+  return config
 
 
 
@@ -106,37 +117,7 @@ class UDPServer(threading.Thread):
       server.serve_forever()   
 
 
-# =================================================
-#
-# A simple logging class
-#
-# =================================================
 
-class Logger(multiprocessing.Process):
-  def __init__(self, q_log):  
-    multiprocessing.Process.__init__(self)
-    self.q_log        = q_log
-    self.log_messages = {}
-    self.timer        = time.time()
-    
-  def run(self):
-    self.timer        = time.time()
-    while True:
-      try : 
-        log_message = self.q_log.get(timeout=2)
-        if log_message is not None:
-          log_file = log_message['log_file']
-          if log_file not in self.log_messages.keys():  
-            self.log_messages[log_file] = []
-          self.log_messages[log_file].append (log_message['log_content'])
-        
-        if (time.time() - self.timer) > 10:  # write log every 10 seconds
-          for log_file in self.log_messages.keys():
-            tb.write_file(file_name=log_file, text = '\n'.join(self.log_messages[log_file]) , mode='a')
-            self.log_messages[log_file] = []
-          self.timer = time.time()
-      except :
-        pass
 
 
 # =================================================
@@ -146,54 +127,57 @@ class Logger(multiprocessing.Process):
 #
 # =================================================
 class DataReader(multiprocessing.Process):
-  def __init__(self, out_queues):
+  def __init__(self, q_log, q_out):
     multiprocessing.Process.__init__(self)
 
-    self.out_queues   = out_queues
-    self.q_log        = multiprocessing.Queue()  
-    self.config       = get_config()['DataReader']
-    self.rawdata      = ""
-    self.mappeddata   = {}
-    self.count        = 0
+    self.q_log            = q_log  
+    self.q_out            = q_out
+
+    self.config           = get_config()['DataReader']
+    self.rawdata          = ""
+    self.mapped_data      = {}
+    self.count            = 0
     
-    self.input_rate   = 0
-    self.output_rate  = 0
+    self.input_rate       = 0
+    self.output_rate      = 0
     
     self.input_time       = time.time()
     self.input_time_prev  = 0
     self.input_rate       = 0
     self.output_time      = time.time()
     self.output_time_prev = 0
-    
-    self.logger           = Logger(self.q_log)
-    self.logger.start()
+    self.noises           = np.random.normal(self.config['noise']['mean'], self.config['noise']['sigma'], size=10000)
+    self.noise_level      = self.config['noise']['level']
     print (self.config)
-
+  
   
     
   def mapdata(self,rawdata):
     # =========================================================
     # map raw data to json format
     # this needs to be customized for your own project
-    # 
-
-    mappeddata = {}
+    #
+    
+    #print (rawdata);
+    mapped_data = {}
 
     # read the data type
     for t in tb.re_findall (r'^(\w+):', rawdata) :
-      mappeddata['Type'] = t
+      mapped_data['Type'] = t
 
     # read the data
     for (k,v) in tb.re_findall (r'(\w+)\=\s*(\-*\d+\.*\d*|\d*)', rawdata) :
-      mappeddata[k] = float(v)
+      mapped_data[k] = float(v)
 
-    return mappeddata
+    return mapped_data
     # =========================================================
  
 
   def log(self, message):
-    if self.config['logger']['enabled'] == True : 
-      self.q_log.put (message)
+    #if self.config['logger']['enabled'] == True : 
+    #  self.q_log.put (message)
+    pass
+      
     
   def get_input_rate(self):
     self.input_time   = time.time()
@@ -204,20 +188,14 @@ class DataReader(multiprocessing.Process):
     self.input_time_prev  = self.input_time
 
   def output_data (self):
-    self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
-    self.get_input_rate()
-    if self.config['throttle']['enabled'] == True:
-      self.output_time   = time.time()
-      if (self.output_time - self.output_time_prev) >0:
-        self.output_rate   = 1/(self.output_time - self.output_time_prev)
+    if bool(self.mapped_data) :
+      if self.config['throttle']['enabled'] == True:
+        self.get_input_rate()
+        self.q_out.put(self.mapped_data)
       else:
-        self.output_rate = 9999
-      if self.output_rate <= self.config['throttle']['rate_limit'] :
-        for q in self.out_queues:   q.put(self.mappeddata)
-        self.output_time_prev  = self.output_time
-    else:
-      for q in self.out_queues:   q.put(self.mappeddata)
-
+        self.q_out.put(self.mapped_data)
+      
+    
 
 
   ###############################################################
@@ -229,7 +207,7 @@ class DataReader(multiprocessing.Process):
     data_lines = tb.read_file(file_name=self.config['channels']['FILE']['name'], return_type='list') 
     for line in data_lines:
       self.rawdata    = line
-      self.mappeddata = self.mapdata(self.rawdata)
+      self.mapped_data = self.mapdata(self.rawdata)
       self.output_data()
       
 
@@ -259,16 +237,44 @@ class DataReader(multiprocessing.Process):
         # EOL detected
         if one_byte == b"\r" and ser.read(1) == b"\n": 
           self.count +=1
-          self.mappeddata = self.mapdata(self.rawdata)
+          self.mapped_data = self.mapdata(self.rawdata)
           self.output_data()
           self.rawdata = "" 
         else:
           self.rawdata += one_char
-          
+      
+      except KeyboardInterrupt:
+        exit(1)         
+        
       except Exception as err:
         self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : err })
         pass         
 
+
+
+
+  ###############################################################
+  #
+  # Read data from mouse movement
+  #
+  ###############################################################
+  def read_from_mouse(self): 
+    sample_rate = self.config['channels']['MOUSE']['sample_rate']
+    while True:
+      try:
+        mX, mY = get_mouse_pos()
+        if self.noise_level >0 :
+          mX_noise = mX * (1 + self.noise_level * random.choice(self.noises))
+          mY_noise = mY * (1 + self.noise_level * random.choice(self.noises))
+          
+        self.rawdata     = 'mouseX=' + str(mX_noise) + ',' + 'mouseY=' + str(mY_noise)
+        self.mapped_data = self.mapdata(self.rawdata)
+        self.output_data()
+        time.sleep(1/sample_rate)
+        
+      except KeyboardInterrupt:
+        exit(1)
+        break    
 
   ###############################################################
   #
@@ -286,12 +292,14 @@ class DataReader(multiprocessing.Process):
         while True:
           self.rawdata  = client.recv(4096).decode("utf-8")
           if len(self.rawdata.rstrip())==0 : continue
-          self.mappeddata = self.mapdata(self.rawdata)
-          self.output_data()            
+          self.mapped_data = self.mapdata(self.rawdata)
+          self.output_data()   
+          
+      except KeyboardInterrupt:
+        exit(1)              
       except Exception as e:
         print(str(e))
         pass
-    
 
   def read_from_udpserver(self):
     pass
@@ -308,9 +316,12 @@ class DataReader(multiprocessing.Process):
     tcpsvr = TCPServer(host = '127.0.0.1', port = self.config['channels']['TCP_CLT']['port'])
     tcpsvr.start()
     while True:
-      self.rawdata = q_thr.get()
-      self.mappeddata = self.mapdata(self.rawdata)
-      self.output_data() 
+      try:
+        self.rawdata = q_thr.get()
+        self.mapped_data = self.mapdata(self.rawdata)
+        self.output_data() 
+      except KeyboardInterrupt:
+        exit(1)              
 
   ###############################################################
   #
@@ -321,20 +332,26 @@ class DataReader(multiprocessing.Process):
     udpsvr = UDPServer(host =  self.config['channels']['UDP_CLT']['host'], port = self.config['channels']['UDP_CLT']['port'])
     udpsvr.start()
     while True:
-      self.rawdata = q_thr.get()
-      self.mappeddata = self.mapdata(self.rawdata)
-      self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mappeddata })
-      self.output_data() 
+      try :
+        self.rawdata = q_thr.get()
+        self.mapped_data = self.mapdata(self.rawdata)
+        self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mapped_data })
+        self.output_data() 
+      except KeyboardInterrupt:
+        exit(1)              
 
 
 
   def run(self):
     # Dispatch to channel
-    self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Data Channel  : {}".format(self.config['feed_channel']) } )
+    #self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Data Channel  : {}".format(self.config['feed_channel']) } )
+    
     if self.config['feed_channel']   == 'FILE':
       self.read_from_file()
     elif self.config['feed_channel'] == 'SERIAL':
       self.read_from_serial()
+    elif self.config['feed_channel'] == 'MOUSE':
+      self.read_from_mouse()      
     elif self.config['feed_channel'] == 'TCP_SVR':
       self.read_from_tcpserver()
     elif self.config['feed_channel'] == 'TCP_CLT':
