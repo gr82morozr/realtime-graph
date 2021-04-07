@@ -1,7 +1,7 @@
 { 
   "DataReader": {
 
-    "feed_channel"    : "SERIAL",
+    "feed_channel"    : "FILE",
     
     "throttle" : {
       "enabled"     : false,
@@ -18,7 +18,7 @@
     "channels" : {
       
       "FILE": {
-        "name" : "./sample.data"
+        "name" : "R:/data.log.data.txt"
       },
       
       "MOUSE": {
@@ -62,10 +62,15 @@
     }
   },
   
-  
+  "MotionTracker" : {
+    "_comments_" : "Draw object 3D motion track"
+
+  },
   
   "DataLogger" : {
-  
+    "_comments_" : "A data logger to log the input data from sensors and save it on disk. it can be used for re-play and analysis.",
+    "log_folder" : "R:/Temp3"
+
   },
   
   "DataProcessor" : {
@@ -93,7 +98,7 @@
   },
   
   
-  "GyroMonitor" : {
+  "GyroViewer" : {
     "object_file"     : "3DModels/shuttle_3D.obj",
     "demo_mode"       : true
   },
@@ -156,6 +161,9 @@
       "mX"  :    { "board_id"    : "3",   "color" : "r"  },
       "mY"  :    { "board_id"    : "3",   "color" : "g"  },
       "mZ"  :    { "board_id"    : "3",   "color" : "m"  },
+      "pX"  :    { "board_id"    : "4",   "color" : "r"  },
+      "pY"  :    { "board_id"    : "5",   "color" : "g"  },
+      "pZ"  :    { "board_id"    : "6",   "color" : "m"  },
       "Roll"  :  { "board_id"    : "10",  "color" : "r"  },
       "Pitch" :  { "board_id"    : "11",  "color" : "g"  },
       "Yaw"   :  { "board_id"    : "12",  "color" : "m"  }
@@ -163,12 +171,15 @@
 
     "data_config"   : { 
       "qW"  :    { "board_id"    : "1",   "color" : "r"  },
-      "qX"  :    { "board_id"    : "4",   "color" : "g"  },
-      "qY"  :    { "board_id"    : "7",   "color" : "m"  },
-      "qZ"  :    { "board_id"    : "10",   "color" : "r" },
-      "Roll"   : { "board_id"    : "2",   "color" : "r" },
-      "Pitch"  : { "board_id"    : "5",   "color" : "g" },
-      "Yaw"    : { "board_id"    : "8",   "color" : "b" }
+      "qX"  :    { "board_id"    : "1",   "color" : "g"  },
+      "qY"  :    { "board_id"    : "1",   "color" : "m"  },
+      "qZ"  :    { "board_id"    : "1",   "color" : "y"  },
+      "aX"  :    { "board_id"    : "2",   "color" : "r"  },
+      "aY"  :    { "board_id"    : "3",   "color" : "g"  },
+      "aZ"  :    { "board_id"    : "4",   "color" : "m"  },
+      "Roll"   : { "board_id"    : "8",   "color" : "r" },
+      "Pitch"  : { "board_id"    : "9",   "color" : "g" },
+      "Yaw"    : { "board_id"    : "10",   "color" : "b" }
     }
 
   }

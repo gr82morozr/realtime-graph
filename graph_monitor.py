@@ -8,48 +8,40 @@ import sys
 import re
 import time
 import json
-import multiprocessing as mp
-import collections
-import serial
-import socket
-
-
-
-from random import randint
-from multiprocessing import Process, Pipe
 import py3toolbox as tb
+import multiprocessing as mp
+from random import randint
 import data_reader as dr
 
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtCore
-
-
+from PyQt5.QtWidgets import QApplication, QOpenGLWidget, QMainWindow
 from collections import deque , defaultdict
 
-module_name = 'GraphMonitor'
+MODULE_NAME = 'GraphMonitor'
+
 
 def get_config():
-  return tb.load_json('./config.json')[module_name]
+  return tb.load_json('./config.json')
 
 
 class GraphMonitor(mp.Process):
-  def __init__(self,q_in=None):
+  def __init__(self, q_in, q_mon):
     mp.Process.__init__(self)
-    self.config     = get_config()
+    self.config     = get_config()[MODULE_NAME]
     self.q_in       = q_in
-    self.trace_data = {}
+    self.q_mon      = q_mon
 
+    self.trace_data = {}
     self.fps = 0   
 
     # for FPS calculation
     self.last  = time.time()
 
-  def init_plots(self):
-    #self.app = QtGui.QApplication([])
-    self.app = pg.mkQApp("RealtimeGraph")
-    self.win = pg.GraphicsWindow(title="Basic plotting")
+  def init_plot(self):
+    self.win = pg.GraphicsWindow(size=(1200,800), title="Basic plotting")
     self.win.addLayout(row=self.config['layouts']['win_layout'][0], col=self.config['layouts']['win_layout'][1]) 
-    self.win.resize(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1])
+    #self.win.resize(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1])
 
     self.win.setWindowTitle(self.config['win_title'])
     pg.setConfigOptions(useOpenGL=True)
@@ -131,30 +123,32 @@ class GraphMonitor(mp.Process):
     self.update_fps()
 
   def run(self):
-    self.init_plots()
-    # kick off the animation
- 
+    self.app   =   QApplication.instance()
+    if self.app is None:
+      self.app = QApplication([])  
+    self.init_plot()
     timer = QtCore.QTimer()
     timer.timeout.connect(self.update)
     timer.start(0)
-    
-    """
-    if self.config['data_feed_wait'] == True:
-      timer.start(0)
-    else:
-      timer.start(self.config['refresh_rate'])
-    """
+    self.q_mon.put(MODULE_NAME)
+    QApplication.exec_()
+    return
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-      pg.mkQApp().exec_()
     
 
 
 
 if __name__ == '__main__':
-  data_queues     = [mp.Queue(), mp.Queue()]
-  data_reader     = dr.DataReader(data_queues)
-  graph_monitor   = GraphMonitor(data_queues[1])
+
+  q_log     = mp.Queue()
+  q_dr_out  = mp.Queue()
+  qs_dp_out = [mp.Queue(), mp.Queue(), mp.Queue()]
+    
+  data_reader    = dr.DataReader(q_log=q_log,       q_out=q_dr_out)
+  #data_processor = dp.DataProcessor(q_in=q_dr_out,  qs_out=qs_dp_out)
+  #motion_tracker = mt.MotionTracker()
+    
+  graph_monitor  = GraphMonitor(qs_dp_out[0])
 
   graph_monitor.start()
   data_reader.start()  

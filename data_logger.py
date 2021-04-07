@@ -2,6 +2,16 @@
 
 import sys
 import math, re, time
+import py3toolbox       as tb
+import multiprocessing  as mp
+import json
+
+MODULE_NAME = "DataLogger"
+
+def get_config():
+  config = tb.load_json('./config.json')
+  return config
+
 
 # =================================================
 #
@@ -9,30 +19,30 @@ import math, re, time
 #
 # =================================================
 
-class Logger(multiprocessing.Process):
-  def __init__(self, q_log):  
-    multiprocessing.Process.__init__(self)
-    self.q_log        = q_log
-    self.log_messages = {}
-    self.timer        = time.time()
-    
+class DataLogger(mp.Process):
+  def __init__(self, q_in,  q_mon):
+    mp.Process.__init__(self)
+    self.config           = get_config()[MODULE_NAME]
+    self.q_in             = q_in  
+    self.q_mon            = q_mon
+    self.data_lines       = ""
+    self.last_updated     = time.time() 
+
+  def log(self) :
+    if get_config()['DataReader']['feed_channel'] == 'FILE' :
+      return
+    else:
+      tb.rm_file('R:/data.log.data.txt')
+      while True:
+        self.data_lines = self.data_lines + "\n" + json.dumps(self.q_in.get())
+        if time.time() - self.last_updated >= 5:
+          tb.write_file(file_name = 'R:/data.log.data.txt', text=self.data_lines + "\n" , mode='a')
+          self.data_lines   = ""
+          self.last_updated = time.time()
+
   def run(self):
-    self.timer        = time.time()
-    while True:
-      try : 
-        log_message = self.q_log.get(timeout=2)
-        if log_message is not None:
-          log_file = log_message['log_file']
-          if log_file not in self.log_messages.keys():  
-            self.log_messages[log_file] = []
-          self.log_messages[log_file].append (log_message['log_content'])
-        
-        if (time.time() - self.timer) > 10:  # write log every 10 seconds
-          for log_file in self.log_messages.keys():
-            tb.write_file(file_name=log_file, text = '\n'.join(self.log_messages[log_file]) , mode='a')
-            self.log_messages[log_file] = []
-          self.timer = time.time()
-      except :
-        pass
-  
+    self.q_mon.put(MODULE_NAME)
+    self.log()
+    pass
+
     

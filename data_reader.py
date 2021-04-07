@@ -17,7 +17,7 @@
 # - UCP Server
 # - UCP Client
 # - MQTT
-# - ......
+# - ... more to be added ...
 # 
 # Main configuration file : config.json
 # Data format             : CSV
@@ -32,20 +32,23 @@ import os,sys,time,json
 import collections
 import serial
 import socket
+import json
 import queue
 import threading
-import multiprocessing 
 import socketserver
 import random
-import numpy as np
+
+
+import numpy      as np
 import py3toolbox as tb
+import multiprocessing as mp
 import pyautogui
 
 
 
+MODULE_NAME = 'DataReader'
+
 q_thr = queue.Queue()
-
-
 
 def get_mouse_pos():
   pos = pyautogui.position()
@@ -126,14 +129,16 @@ class UDPServer(threading.Thread):
 #  for TCP server/UDP server
 #
 # =================================================
-class DataReader(multiprocessing.Process):
-  def __init__(self, q_log, q_out):
-    multiprocessing.Process.__init__(self)
+class DataReader(mp.Process):
+  def __init__(self, q_out, q_mon):
+    mp.Process.__init__(self)
+    self.config           = get_config()[MODULE_NAME]
 
-    self.q_log            = q_log  
     self.q_out            = q_out
+    self.q_mon            = q_mon
 
-    self.config           = get_config()['DataReader']
+    
+
     self.rawdata          = ""
     self.mapped_data      = {}
     self.count            = 0
@@ -148,11 +153,11 @@ class DataReader(multiprocessing.Process):
     self.output_time_prev = 0
     self.noises           = np.random.normal(self.config['noise']['mean'], self.config['noise']['sigma'], size=10000)
     self.noise_level      = self.config['noise']['level']
-    print (self.config)
-  
+    
+
   
     
-  def mapdata(self,rawdata):
+  def map_data(self,rawdata):
     # =========================================================
     # map raw data to json format
     # this needs to be customized for your own project
@@ -188,15 +193,16 @@ class DataReader(multiprocessing.Process):
     self.input_time_prev  = self.input_time
 
   def output_data (self):
+    if self.config['feed_channel'] != 'FILE' :
+      self.mapped_data['TS'] = time.time()
+
     if bool(self.mapped_data) :
-      if self.config['throttle']['enabled'] == True:
-        self.get_input_rate()
-        self.q_out.put(self.mapped_data)
+      if type(self.q_out) is list:
+        for q in self.q_out:
+          q.put(self.mapped_data)
       else:
         self.q_out.put(self.mapped_data)
       
-    
-
 
   ###############################################################
   #
@@ -205,11 +211,22 @@ class DataReader(multiprocessing.Process):
   ###############################################################
   def read_from_file(self):  
     data_lines = tb.read_file(file_name=self.config['channels']['FILE']['name'], return_type='list') 
+    data_line_ts = {}
+    ts_list = []
     for line in data_lines:
-      self.rawdata    = line
-      self.mapped_data = self.mapdata(self.rawdata)
+      if line.strip() == "" : continue
+      dic_line = json.loads(line) 
+      data_line_ts[dic_line['TS']] = dic_line
+      ts_list.append(dic_line['TS'])
+
+    ts_list.sort()
+    ts_prev = None
+    for ts in ts_list :
+      if ts_prev is None:  ts_prev = ts
+      self.mapped_data = data_line_ts[ts]
+      time.sleep(abs(ts - ts_prev))
       self.output_data()
-      
+      ts_prev = ts
 
   ###############################################################
   #
@@ -237,7 +254,7 @@ class DataReader(multiprocessing.Process):
         # EOL detected
         if one_byte == b"\r" and ser.read(1) == b"\n": 
           self.count +=1
-          self.mapped_data = self.mapdata(self.rawdata)
+          self.mapped_data = self.map_data(self.rawdata)
           self.output_data()
           self.rawdata = "" 
         else:
@@ -268,7 +285,7 @@ class DataReader(multiprocessing.Process):
           mY_noise = mY * (1 + self.noise_level * random.choice(self.noises))
           
         self.rawdata     = 'mouseX=' + str(mX_noise) + ',' + 'mouseY=' + str(mY_noise)
-        self.mapped_data = self.mapdata(self.rawdata)
+        self.mapped_data = self.map_data(self.rawdata)
         self.output_data()
         time.sleep(1/sample_rate)
         
@@ -292,7 +309,7 @@ class DataReader(multiprocessing.Process):
         while True:
           self.rawdata  = client.recv(4096).decode("utf-8")
           if len(self.rawdata.rstrip())==0 : continue
-          self.mapped_data = self.mapdata(self.rawdata)
+          self.mapped_data = self.map_data(self.rawdata)
           self.output_data()   
           
       except KeyboardInterrupt:
@@ -318,10 +335,13 @@ class DataReader(multiprocessing.Process):
     while True:
       try:
         self.rawdata = q_thr.get()
-        self.mapped_data = self.mapdata(self.rawdata)
+        self.mapped_data = self.map_data(self.rawdata)
         self.output_data() 
       except KeyboardInterrupt:
         exit(1)              
+
+
+
 
   ###############################################################
   #
@@ -334,7 +354,7 @@ class DataReader(multiprocessing.Process):
     while True:
       try :
         self.rawdata = q_thr.get()
-        self.mapped_data = self.mapdata(self.rawdata)
+        self.mapped_data = self.map_data(self.rawdata)
         self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mapped_data })
         self.output_data() 
       except KeyboardInterrupt:
@@ -343,30 +363,34 @@ class DataReader(multiprocessing.Process):
 
 
   def run(self):
-    # Dispatch to channel
-    #self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Data Channel  : {}".format(self.config['feed_channel']) } )
-    
-    if self.config['feed_channel']   == 'FILE':
-      self.read_from_file()
-    elif self.config['feed_channel'] == 'SERIAL':
-      self.read_from_serial()
-    elif self.config['feed_channel'] == 'MOUSE':
-      self.read_from_mouse()      
-    elif self.config['feed_channel'] == 'TCP_SVR':
-      self.read_from_tcpserver()
-    elif self.config['feed_channel'] == 'TCP_CLT':
-      self.read_from_tcpclient()
-    elif self.config['feed_channel'] == 'UDP_SVR':
-      self.read_from_udpserver()
-    elif self.config['feed_channel'] == 'UDP_CLT':
-      self.read_from_udpclient()
-    elif self.config['feed_channel'] == 'MQTT':
-      self.read_from_mqtt()     
+    self.q_mon.put(MODULE_NAME)
+    # Dispatch to data input channels
+    try : 
+      if self.config['feed_channel']   == 'FILE':
+        self.read_from_file()
+      elif self.config['feed_channel'] == 'SERIAL':
+        self.read_from_serial()
+      elif self.config['feed_channel'] == 'MOUSE':
+        self.read_from_mouse()      
+      elif self.config['feed_channel'] == 'TCP_SVR':
+        self.read_from_tcpserver()
+      elif self.config['feed_channel'] == 'TCP_CLT':
+        self.read_from_tcpclient()
+      elif self.config['feed_channel'] == 'UDP_SVR':
+        self.read_from_udpserver()
+      elif self.config['feed_channel'] == 'UDP_CLT':
+        self.read_from_udpclient()
+      elif self.config['feed_channel'] == 'MQTT':
+        self.read_from_mqtt()    
 
+
+
+    except Exception as err:
+      exit (1)
 
 
 if __name__ == '__main__':   
-  q_data = multiprocessing.Queue()  
+  q_data = mp.Queue()  
   dr = DataReader([q_data])
   dr.start()
   
