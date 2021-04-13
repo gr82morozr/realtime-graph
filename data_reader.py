@@ -1,26 +1,21 @@
 #!/usr/bin/env python
 
 # =====================================================================
-# This is a common class, which can read data from multiple channels,
-# and then pass to output queue to be consumed by Monitor tools.
-#
-# Combined with the monitors, this utility can be used to collect 
-# IOT/Robtics sensors data at real-time, or show 3D object movement
-# of Gyro sensor.
+# DataReader class, which can read data from multiple channels,
+# and then pass to output queues to be consumed by next processors
 #
 # Avaliable channels:
-# - File         : read data from file, normally for testing only
-# - Serial Port  : 
-# - Mouse        : Use mouse movements to generate random signals
-# - TCP Server
-# - TCP Client
-# - UCP Server
-# - UCP Client
-# - MQTT
+# - FILE         : read data from file, normally for testing only
+# - SERIAL       : 
+# - MOUSE        : Use mouse movements to generate random signals + noises
+# - TCP Server   : TO DO
+# - TCP Client   : TO DO 
+# - UCP Server   : TO DO
+# - UCP Client   : TO DO
+# - MQTT         : TO DO
 # - ... more to be added ...
 # 
 # Main configuration file : config.json
-# Data format             : CSV
 #
 # =====================================================================
 
@@ -178,12 +173,7 @@ class DataReader(mp.Process):
     # =========================================================
  
 
-  def log(self, message):
-    #if self.config['logger']['enabled'] == True : 
-    #  self.q_log.put (message)
-    pass
       
-    
   def get_input_rate(self):
     self.input_time   = time.time()
     if (self.input_time - self.input_time_prev) > 0:
@@ -197,6 +187,7 @@ class DataReader(mp.Process):
       self.mapped_data['TS'] = time.time()
 
     if bool(self.mapped_data) :
+      self.get_input_rate()
       if type(self.q_out) is list:
         for q in self.q_out:
           q.put(self.mapped_data)
@@ -219,12 +210,14 @@ class DataReader(mp.Process):
       data_line_ts[dic_line['TS']] = dic_line
       ts_list.append(dic_line['TS'])
 
-    ts_list.sort()
+    # sort the data , if playback_speed <0, then reverse
+    ts_list.sort(reverse= self.config['channels']['FILE']['playback_speed']<0 )
+
     ts_prev = None
     for ts in ts_list :
       if ts_prev is None:  ts_prev = ts
       self.mapped_data = data_line_ts[ts]
-      time.sleep(abs(ts - ts_prev))
+      time.sleep(abs(ts - ts_prev) / abs(self.config['channels']['FILE']['playback_speed'] )  ) 
       self.output_data()
       ts_prev = ts
 
@@ -239,9 +232,7 @@ class DataReader(mp.Process):
                           timeout   = self.config['channels']['SERIAL']['timeout']
                        )
 
-    self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : "Connected to: {}".format(ser.port) } )
-
-    while True:
+    while True: 
       try :
         one_char = ""
         one_byte = ser.read(1)
@@ -259,12 +250,11 @@ class DataReader(mp.Process):
           self.rawdata = "" 
         else:
           self.rawdata += one_char
-      
+
       except KeyboardInterrupt:
         exit(1)         
         
       except Exception as err:
-        self.log({ 'log_file' : self.config['logger']['script_log'] , 'log_content' : err })
         pass         
 
 
@@ -355,7 +345,6 @@ class DataReader(mp.Process):
       try :
         self.rawdata = q_thr.get()
         self.mapped_data = self.map_data(self.rawdata)
-        self.log({ 'log_file' : self.config['logger']['data_output'] ,  'log_content' : self.mapped_data })
         self.output_data() 
       except KeyboardInterrupt:
         exit(1)              

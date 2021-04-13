@@ -73,24 +73,21 @@ class Gyro3D(QOpenGLWidget):
 
 
   def readData(self):
-    if self.q_in.qsize()>0 :
-      try:
-        data = self.q_in.get()
+    try:
+      data = self.q_in.get(False)
+      if data is not None:
         self.type = data['Type']
         if  self.type == 'QUATERNION' :
           self.qW     = data['qW']
           self.qX     = data['qX']
           self.qY     = data['qY']
           self.qZ     = data['qZ']
-
         elif self.type == 'YPR' :
           self.Yaw    = data['Yaw']
           self.Pitch  = data['Pitch']
           self.Roll   = data['Roll']
-
-
-      except:
-        pass
+    except Exception:
+      pass
     
     
     
@@ -253,7 +250,7 @@ class GyroViewer(mp.Process):
     QApplication.exec_()
     return
 
-def demo() :
+def Gyro3D_demo() :
   ## Demo Mode ##
   config = get_config()
   q_in = mp.Queue()
@@ -310,7 +307,7 @@ def demo() :
 
 
 if __name__ == '__main__':
-  demo()
+  Gyro3D_demo()
   pass
   
 

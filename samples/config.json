@@ -1,9 +1,7 @@
 { 
-
-  "_line1_" : "==================================================================================================",
   "DataReader": {
 
-    "feed_channel"    : "SERIAL",
+    "feed_channel"    : "FILE",
     
     "throttle" : {
       "enabled"     : false,
@@ -20,9 +18,7 @@
     "channels" : {
       
       "FILE": {
-        "_desc_"  : "Read raw data from file and can replay the signal time series. if playback_speed<0, then replay reversely",
-        "name"    : "samples/data.sensors.log",
-        "playback_speed" : 0.4
+        "name" : "samples/data.log.data.txt"
       },
       
       "MOUSE": {
@@ -30,8 +26,8 @@
       },
       
       "SERIAL": {
-        "port"      : "COM7",
-        "baud_rate" : 921600,
+        "port"      : "COM3",
+        "baud_rate" : 115200,
         "timeout"   : 1
       },
       
@@ -56,31 +52,29 @@
       "MQTT"       : {
         "TO_BE_ADDED" : "N/A"
       }
-    }
+    },
     
-
+    "logger": {
+      "enabled"       : true,
+      "data_input"    : "R:/temp2/data_input.log" ,
+      "data_output"   : "R:/temp2/data_output.log",
+      "script_log"    : "R:/temp2/data_reader.log"
+    }
   },
   
-
-  "_line2_" : "==================================================================================================",
   "MotionTracker" : {
     "_comments_" : "Draw object 3D motion track"
 
   },
   
-  "_line3_" : "==================================================================================================",
   "DataLogger" : {
     "_comments_" : "A data logger to log the input data from sensors and save it on disk. it can be used for re-play and analysis.",
     "log_folder" : "R:/Temp3"
 
   },
   
-  "_line4_" : "==================================================================================================",
   "DataProcessor" : {
-    "filter" : "TEST",
-    "TEST" :  {
-    
-    },    
+    "filter" : "NOFLTR_FOR_QUAT",
     
     "COMPLEMENTARY" :  {
     
@@ -98,20 +92,23 @@
     
     }
 
+
+
+
   },
   
-  "_line5_" : "==================================================================================================",
+  
   "GyroViewer" : {
-    "object_file"     : "3DModels/shuttle_3D.obj"
+    "object_file"     : "3DModels/shuttle_3D.obj",
+    "demo_mode"       : true
   },
 
-  "_line6_" : "==================================================================================================",
   "GraphMonitor" : {
     "data_feed_wait"    : false,
     "refresh_rate"      : 60,
     "win_title"         : "Realtime Data Visualizer",
     "layouts"           : {
-      "win_size"        : [1600,900],
+      "win_size"        : [1200,600],
       "win_layout"      : [1,1],
       "boards"          : { 
         "1"   : { "layout" : [1,1,1,1], "max_entries" : 200 },
@@ -172,65 +169,18 @@
       "Yaw"   :  { "board_id"    : "12",  "color" : "m"  }
     },
 
-    "data_config_all"   : { 
-      "aX"  :    { "board_id"    : "1",   "color" : "g"  },
-      "aY"  :    { "board_id"    : "2",   "color" : "g"  },
-      "aZ"  :    { "board_id"    : "3",   "color" : "g"  },
-
-      "gX"  :    { "board_id"    : "4",   "color" : "g"  },
-      "gY"  :    { "board_id"    : "5",   "color" : "g"  },
-      "gZ"  :    { "board_id"    : "6",   "color" : "g"  },
-
-      "Roll"  :  { "board_id"    : "7",   "color" : "y"  },
-      "Pitch" :  { "board_id"    : "8",   "color" : "y"  },
-      "Yaw"   :  { "board_id"    : "9",   "color" : "y"  },
-
-      "qW"  :   { "board_id"    : "10",   "color" : "y"  },
-      "qX"  :   { "board_id"    : "10",   "color" : "r"  },
-      "qY"  :   { "board_id"    : "10",   "color" : "g"  },
-      "qZ"  :   { "board_id"    : "10",   "color" : "m"  },
-
-      "mX"  :    { "board_id"    : "11",   "color" : "r"  },
-      "mY"  :    { "board_id"    : "11",   "color" : "g"  },
-      "mZ"  :    { "board_id"    : "11",   "color" : "m"  },
-
-      "Heading": { "board_id"    : "12",   "color" : "y"  }
-
-    },
-
-    "data_config_cal"   : { 
-
-      "aX"      :    { "board_id"    : "1",   "color" : "b"  },
-      "avg.aX"  :    { "board_id"    : "1",   "color" : "m"  },
-      "exp.aX"  :    { "board_id"    : "1",   "color" : "y"  },
-
-      "aY"      :    { "board_id"    : "2",   "color" : "b"  },
-      "avg.aY"  :    { "board_id"    : "2",   "color" : "m"  },
-      "exp.aY"  :    { "board_id"    : "2",   "color" : "y"  },
-
-      "aZ"      :    { "board_id"    : "3",   "color" : "b"  },
-      "avg.aZ"  :    { "board_id"    : "3",   "color" : "m"  },
-      "exp.aZ"  :    { "board_id"    : "3",   "color" : "y"  }
-      
-      
-      
-
-    
-
-    },
-
     "data_config"   : { 
-
-      "mX"  :    { "board_id"    : "1",   "color" : "r"  },
-      "mY"  :    { "board_id"    : "2",   "color" : "g"  },
-      "mZ"  :    { "board_id"    : "3",   "color" : "m"  }
-
-      
-      
-
-    
-
-    }   
+      "qW"  :    { "board_id"    : "1",   "color" : "r"  },
+      "qX"  :    { "board_id"    : "1",   "color" : "g"  },
+      "qY"  :    { "board_id"    : "1",   "color" : "m"  },
+      "qZ"  :    { "board_id"    : "1",   "color" : "y"  },
+      "aX"  :    { "board_id"    : "2",   "color" : "r"  },
+      "aY"  :    { "board_id"    : "3",   "color" : "g"  },
+      "aZ"  :    { "board_id"    : "4",   "color" : "m"  },
+      "Roll"   : { "board_id"    : "8",   "color" : "r" },
+      "Pitch"  : { "board_id"    : "9",   "color" : "g" },
+      "Yaw"    : { "board_id"    : "10",   "color" : "b" }
+    }
 
   }
 }

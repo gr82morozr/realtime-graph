@@ -4,12 +4,13 @@
 #
 # =====================================================================
 
- 
-import sys
+import os, sys
 import math, re, time
 import multiprocessing as mp
 import py3toolbox as tb
 
+
+import low_pass_filters as lpf
 
 MODULE_NAME = 'DataProcessor'
 
@@ -17,6 +18,9 @@ MODULE_NAME = 'DataProcessor'
 def get_config():
   config = tb.load_json('./config.json')
   return config
+
+
+
 
 
 
@@ -38,6 +42,52 @@ class DataProcessor(mp.Process):
     
     self.processed_data   = {}
 
+  def apply_test_filter(self):
+    ravg_fltr = lpf.RunningAvarageFilter(10)
+    exp_fltr  = lpf.ExponentialFilter(0.2)
+
+    mX_min = None
+    mX_max = None
+    mY_min = None
+    mY_max = None
+    mZ_min = None
+    mZ_max = None
+
+    while True:
+      try : 
+        data = self.q_in.get()
+        data['Type'] = 'QUATERNION'
+        data['avg.aX'], data['avg.aY'], data['avg.aZ'] = ravg_fltr.compute([data['aX'], data['aY'], data['aZ']])
+        data['exp.aX'], data['exp.aY'], data['exp.aZ'] = exp_fltr.compute([data['aX'], data['aY'], data['aZ']])
+
+        if mX_min is None : mX_min = data["mX"]
+        if mX_max is None : mX_max = data["mX"]
+
+        if mY_min is None : mY_min = data["mY"]
+        if mY_max is None : mY_max = data["mY"]
+
+        if mZ_min is None : mZ_min = data["mZ"]
+        if mZ_max is None : mZ_max = data["mZ"]
+
+        if data["mX"] < mX_min : mX_min = data["mX"]
+        if data["mX"] > mX_max : mX_max = data["mX"]
+
+        if data["mY"] < mY_min : mY_min = data["mY"]
+        if data["mY"] > mY_max : mY_max = data["mY"]
+
+        if data["mZ"] < mZ_min : mZ_min = data["mZ"]
+        if data["mZ"] > mZ_max : mZ_max = data["mZ"]
+
+        #print ("mX_range=" + str(mX_min) + " ~ " +  str(mX_max) )
+        #print ("mY_range=" + str(mY_min) + " ~ " +  str(mY_max) )
+        #print ("mZ_range=" + str(mZ_min) + " ~ " +  str(mZ_max) )
+
+        self.processed_data = data
+        self.output_data()
+      except Exception:
+        pass
+
+ 
 
   def apply_no_filter_for_raw(self):
     Yaw = 0
@@ -54,7 +104,7 @@ class DataProcessor(mp.Process):
           data['Type'] = 'YPR'
           print (self.q_in.qsize(),self.q_out[0].qsize() )
         self.processed_data = data
-        self.output()
+        self.output_data()
       except Exception:
         pass
 
@@ -77,7 +127,7 @@ class DataProcessor(mp.Process):
         data['Type'] = 'QUATERNION'
         #data['Type'] = 'YPR'
         self.processed_data = data
-        self.output()
+        self.output_data()
       except Exception:
         pass
 
@@ -96,17 +146,19 @@ class DataProcessor(mp.Process):
           data['Type'] = 'YPR'
           print (self.q_in.qsize(),self.q_out[0].qsize() )
         self.processed_data = data
-        self.output()
+        self.output_data()
       except Exception:
         pass
 
 
-  def output(self) :
-    if type(self.q_out) is list:
-      for q in self.q_out:
-        q.put(self.processed_data)
-    else:
-      self.q_out.put(self.processed_data)
+
+  def output_data (self):
+    if bool(self.processed_data) :
+      if type(self.q_out) is list:
+        for q in self.q_out:
+          q.put(self.processed_data)
+      else:
+        self.q_out.put(self.processed_data)
 
 
     
@@ -125,6 +177,8 @@ class DataProcessor(mp.Process):
         self.apply_no_filter_for_raw()
       elif self.config['filter'] == 'NOFLTR_FOR_QUAT':
         self.apply_no_filter_for_quat()
+      elif self.config['filter'] == 'TEST':
+        self.apply_test_filter()
     
     except Exception as err:
       exit (1)

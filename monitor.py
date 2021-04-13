@@ -52,7 +52,7 @@ def run_monitor() :
     gyro_viewer    = gv.GyroViewer(q_in=q_proc_out[1], q_mon=q_mon)
 
     # #d motion tracker based on inertial frame of reference
-    motion_tracker = mt.MotionTracker(q_in=q_proc_out[2], q_mon=q_mon)
+    motion_tracker = mt.Scatter3DViewer(q_in=q_proc_out[2], q_mon=q_mon)
 
     # make sure all other processes started first except DataReader
     pre_start_procs = [data_processor, data_logger, graph_monitor , gyro_viewer , motion_tracker]
@@ -61,7 +61,7 @@ def run_monitor() :
     # wait until all started except  DataReader   
     while True:
       data = q_mon.get()
-      print (data)
+      print ("\t- " + data + "\t ... started.")
       processes.remove(data)
       
       if len(processes) == 1 and processes[0] == "DataReader":
@@ -70,12 +70,12 @@ def run_monitor() :
         time.sleep(0.1)
     
     # then start up data reader the last
+    time.sleep(2)
     pre_start_procs.append(data_reader)
     print ("All Processors are started, now starting DataReader ...")
     data_reader.start()
     
   except Exception as err:
-    # send messages to stop each process gracefully.
     print (err)
     exit(1) 
 

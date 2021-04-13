@@ -8,6 +8,7 @@ import sys
 import re
 import time
 import json
+import math
 import py3toolbox as tb
 import multiprocessing as mp
 from random import randint
@@ -39,7 +40,7 @@ class GraphMonitor(mp.Process):
     self.last  = time.time()
 
   def init_plot(self):
-    self.win = pg.GraphicsWindow(size=(1200,800), title="Basic plotting")
+    self.win = pg.GraphicsWindow(size=(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1]), title="Basic plotting")
     self.win.addLayout(row=self.config['layouts']['win_layout'][0], col=self.config['layouts']['win_layout'][1]) 
     #self.win.resize(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1])
 
@@ -79,48 +80,18 @@ class GraphMonitor(mp.Process):
   # update data for charts  
   def update(self):
     try :
-      data = self.q_in.get()
-      for k in data.keys():
-        if k not in self.config['data_config']: continue
-        if k not in self.trace_data :  self.init_trace_data(k) 
-        self.trace_data[k]['y_data'].append(float(data[k]))
-        self.trace_data[k]['plot'].setData(self.trace_data[k]['x_data'] ,self.trace_data[k]['y_data'])
-
-    except KeyboardInterrupt:
-      exit(1)       
-    """
-    # wait for data feed
-    if self.config['data_feed_wait'] == True:
-      #rawdata = self.q_in.get()
-      #print (rawdata)
-      data = self.q_in.get()
-      #data = json.loads(self.q_in.recv())
-      #if self.config['DROP_FRAME'] == True and self.config['FILE_TEST'] == False and self.q_in.qsize() > int(self.fps / 8) :
-      #  return
-      for k in data.keys():
-        if k not in self.config['data_config']: continue
-        if k not in self.trace_data :
-          self.init_trace_data(k) 
-        self.trace_data[k]['y_data'].append(float(data[k]))
-    else :
-      # NOT wait for data feed
-      try :
-        data = self.q_in.get(block=False, timeout=1)
+      data = self.q_in.get(False)
+      if data is not None:
         for k in data.keys():
           if k not in self.config['data_config']: continue
-          if k not in self.trace_data:
-            self.init_trace_data(k)
-          #self.trace_data[k]['y_data'].append(float(data[k]))        
-          self.trace_data[k]['y_data'].append(data[k])
+          if k not in self.trace_data :  self.init_trace_data(k) 
+          self.trace_data[k]['y_data'].append(float(data[k]))
+          self.trace_data[k]['plot'].setData(self.trace_data[k]['x_data'] ,self.trace_data[k]['y_data'])
+        self.update_fps()  
+    except Exception:
+      pass      
 
-      except Exception:
-        for k in self.trace_data.keys():
-          self.trace_data[k]['y_data'].append( self.trace_data[k]['y_data'][-1] )  
-      
-    for k in self.trace_data.keys():
-      self.trace_data[k]['plot'].setData(self.trace_data[k]['x_data'] ,self.trace_data[k]['y_data'])
-    """
-    self.update_fps()
+    
 
   def run(self):
     self.app   =   QApplication.instance()
@@ -135,21 +106,29 @@ class GraphMonitor(mp.Process):
     return
 
     
+def GraphMonitor_demo() :
+  q_in          = mp.Queue()
+  q_mon         = mp.Queue()
+  config        = get_config()[MODULE_NAME]
+  p = GraphMonitor(q_in =q_in, q_mon=q_mon)  
 
+  p.start()
+  data = {}
+  for x in np.arange(0,10000, math.pi/90):
+    data[list(config['data_config'].keys())[0]] = math.sin(x)
+    data[list(config['data_config'].keys())[1]] = math.cos(x)
+    data[list(config['data_config'].keys())[2]] = math.cos(x) + math.sin(x)
+    q_in.put(data)
+    time.sleep(0.02)
+
+
+
+
+
+
+  pass
 
 
 if __name__ == '__main__':
-
-  q_log     = mp.Queue()
-  q_dr_out  = mp.Queue()
-  qs_dp_out = [mp.Queue(), mp.Queue(), mp.Queue()]
-    
-  data_reader    = dr.DataReader(q_log=q_log,       q_out=q_dr_out)
-  #data_processor = dp.DataProcessor(q_in=q_dr_out,  qs_out=qs_dp_out)
-  #motion_tracker = mt.MotionTracker()
-    
-  graph_monitor  = GraphMonitor(qs_dp_out[0])
-
-  graph_monitor.start()
-  data_reader.start()  
+  GraphMonitor_demo()
   

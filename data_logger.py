@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import os,sys
 import math, re, time
 import py3toolbox       as tb
 import multiprocessing  as mp
@@ -27,16 +27,17 @@ class DataLogger(mp.Process):
     self.q_mon            = q_mon
     self.data_lines       = ""
     self.last_updated     = time.time() 
+    self.log_file         = os.path.join(self.config["log_folder"], "data.sensors.log" )
 
   def log(self) :
     if get_config()['DataReader']['feed_channel'] == 'FILE' :
       return
     else:
-      tb.rm_file('R:/data.log.data.txt')
+      tb.rm_file(self.log_file)
       while True:
         self.data_lines = self.data_lines + "\n" + json.dumps(self.q_in.get())
         if time.time() - self.last_updated >= 5:
-          tb.write_file(file_name = 'R:/data.log.data.txt', text=self.data_lines + "\n" , mode='a')
+          tb.write_file(file_name = self.log_file , text=self.data_lines + "\n" , mode='a')
           self.data_lines   = ""
           self.last_updated = time.time()
 
