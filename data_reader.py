@@ -138,14 +138,10 @@ class DataReader(mp.Process):
     self.mapped_data      = {}
     self.count            = 0
     
-    self.input_rate       = 0
     self.output_rate      = 0
-    
-    self.input_time       = time.time()
-    self.input_time_prev  = 0
-    self.input_rate       = 0
-    self.output_time      = time.time()
-    self.output_time_prev = 0
+    self.output_time       = time.time()
+    self.output_time_prev  = 0
+
     self.noises           = np.random.normal(self.config['noise']['mean'], self.config['noise']['sigma'], size=10000)
     self.noise_level      = self.config['noise']['level']
     
@@ -174,20 +170,21 @@ class DataReader(mp.Process):
  
 
       
-  def get_input_rate(self):
-    self.input_time   = time.time()
-    if (self.input_time - self.input_time_prev) > 0:
-      self.input_rate   = 1/(self.input_time - self.input_time_prev)
+  def get_output_rate(self):
+    self.output_time   = time.time()
+    if (self.output_time - self.output_time_prev) > 0:
+      self.output_rate   = int(1/(self.output_time - self.output_time_prev))
     else:
-      self.input_rate = 9999
-    self.input_time_prev  = self.input_time
+      pass
+    self.output_time_prev  = self.output_time
+    #print (self.output_rate )
 
   def output_data (self):
     if self.config['feed_channel'] != 'FILE' :
       self.mapped_data['TS'] = time.time()
 
     if bool(self.mapped_data) :
-      self.get_input_rate()
+      self.get_output_rate()
       if type(self.q_out) is list:
         for q in self.q_out:
           q.put(self.mapped_data)

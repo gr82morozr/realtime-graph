@@ -10,7 +10,12 @@ import multiprocessing as mp
 import py3toolbox as tb
 
 
+import math_helper as mh
+
 import low_pass_filters as lpf
+
+from scipy.spatial.transform import Rotation 
+
 
 MODULE_NAME = 'DataProcessor'
 
@@ -77,14 +82,13 @@ class DataProcessor(mp.Process):
 
         if data["mZ"] < mZ_min : mZ_min = data["mZ"]
         if data["mZ"] > mZ_max : mZ_max = data["mZ"]
-
-        #print ("mX_range=" + str(mX_min) + " ~ " +  str(mX_max) )
-        #print ("mY_range=" + str(mY_min) + " ~ " +  str(mY_max) )
-        #print ("mZ_range=" + str(mZ_min) + " ~ " +  str(mZ_max) )
+            
+        data['Pitch'], data['Roll'],  data['Yaw'] = mh.get_euler( [  data['qX'],  data['qY'], data["qZ"], data['qW']   ]   )
 
         self.processed_data = data
         self.output_data()
-      except Exception:
+      except  Exception as e:
+        print (str(e))
         pass
 
  

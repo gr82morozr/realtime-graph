@@ -15,7 +15,8 @@ from PyQt5.QtGui import (QBrush, QColor, QFontMetrics, QImage, QPainter,  QSurfa
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 
 from pyquaternion import Quaternion
-
+from scipy.spatial.transform import Rotation 
+import math_helper as mh
 
 MODULE_NAME = 'GyroViewer'
 
@@ -82,6 +83,7 @@ class Gyro3D(QOpenGLWidget):
           self.qX     = data['qX']
           self.qY     = data['qY']
           self.qZ     = data['qZ']
+
         elif self.type == 'YPR' :
           self.Yaw    = data['Yaw']
           self.Pitch  = data['Pitch']
@@ -148,19 +150,30 @@ class Gyro3D(QOpenGLWidget):
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
     gl.glLoadIdentity()
     gl.glTranslatef(0.0, 0.0, -10.0)
+    # below rotation is actually change the view point
+    gl.glRotatef(-90.0, 1.0, 0.0, 0.0)
+    gl.glRotatef(90.0, 0.0, 0.0, 1.0)
+    
     gl.glScalef(1.2, 1.2, 1.2)
 
-
+    
     if  self.type == 'QUATERNION' :
-      quat = Quaternion (self.qW , self.qY, self.qZ, -self.qX)
-      angle = quat.angle * 180 / math.pi
-      u = quat.axis 
-      gl.glRotatef(angle   , u[0], u[1], u[2])
-    elif self.type == 'YPR' :
-      gl.glRotatef(self.Pitch     , 1.0, 0.0, 0.0) 
-      gl.glRotatef(self.Yaw       , 0.0, 1.0, 0.0)
-      gl.glRotatef(self.Roll      , 0.0, 0.0, 1.0)
+      angle, axis  = mh.get_rotation_axis_angle([self.qX, self.qY, self.qZ, self.qW], degrees=True)
+      #quat = Quaternion (self.qW , self.qX, self.qY, self.qZ)
+      #angle = quat.angle * 180 / math.pi
+      #u = quat.axis 
+      gl.glRotatef(angle   , axis[0], axis[1], axis[2])
 
+      #gl.glRotatef(angle   , u[1], u[2], -u[0])
+      #rot_mat = Rotation.from_quat([self.qX, self.qY, self.qZ, self.qW]).as_matrix()
+      #gl.glMultMatrixf(rot_mat)
+      pass
+
+    elif self.type == 'YPR' :
+      gl.glRotatef(self.Roll    , 1.0, 0.0, 0.0)   # rotate against X axis
+      gl.glRotatef(self.Pitch   , 0.0, 1.0, 0.0)   # rotate against Y axis
+      gl.glRotatef(self.Yaw     , 0.0, 0.0, 1.0)   # rotate against Z axis
+      
 
     gl.glCallList(self.object)
     gl.glMatrixMode(gl.GL_MODELVIEW)

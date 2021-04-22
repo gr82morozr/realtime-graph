@@ -30,8 +30,8 @@
       },
       
       "SERIAL": {
-        "port"      : "COM7",
-        "baud_rate" : 921600,
+        "port"      : "COM3",
+        "baud_rate" : 115200,
         "timeout"   : 1
       },
       
@@ -221,11 +221,14 @@
 
     "data_config"   : { 
 
-      "mX"  :    { "board_id"    : "1",   "color" : "r"  },
-      "mY"  :    { "board_id"    : "2",   "color" : "g"  },
-      "mZ"  :    { "board_id"    : "3",   "color" : "m"  }
+      "gX"  :    { "board_id"    : "1",   "color" : "r"  },
+      "gY"  :    { "board_id"    : "2",   "color" : "g"  },
+      "gZ"  :    { "board_id"    : "3",   "color" : "m"  },
 
-      
+      "aX"  :    { "board_id"    : "4",   "color" : "r"  },
+      "aY"  :    { "board_id"    : "5",   "color" : "g"  },
+      "aZ"  :    { "board_id"    : "6",   "color" : "m"  }
+
       
 
     

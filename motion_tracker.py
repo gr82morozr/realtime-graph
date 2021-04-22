@@ -9,6 +9,9 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 import pyqtgraph.opengl as gl
 import pyqtgraph as pg
+import math_helper as mh
+
+
 
 MODULE_NAME = 'MotionTracker'
 
@@ -17,6 +20,13 @@ def get_config():
   return tb.load_json('./config.json')
 
 
+"""
+#
+# Motion Tracker
+# - 3D motion tacking
+#
+#
+"""
 
 class MotionTracker(mp.Process):
   def __init__(self, q_in, q_mon):
@@ -42,37 +52,43 @@ class MotionTracker(mp.Process):
     layoutgb.addWidget(self.w,0,0)
 
 
-    self.w.opts['distance'] = 20
+    self.w.opts['distance'] = 400
     self.w.setWindowTitle('GL LinePlotItem')
-    self.w.setGeometry(0, 110, 1000, 1000)
+    self.w.setGeometry(0, 0, 2000, 2000)
     self.w.show()
 
     # create the background grids
     gx = gl.GLGridItem()
+    gx.setSize(200,200,200)
+    gx.setColor((0, 255, 0, 80.0))
+    #gx.setSpacing(3,3,3)
     gx.rotate(90, 0, 1, 0)
-    gx.translate(-10, 0, 0)
     self.w.addItem(gx)
+
+
     gy = gl.GLGridItem()
+    gy.setSize(200,200,200)
+    gy.setColor((255, 0, 0, 80.0))
+    #gy.setSpacing(3,3,3)
     gy.rotate(90, 1, 0, 0)
-    gy.translate(0, -10, 0)
     self.w.addItem(gy)
+
     gz = gl.GLGridItem()
-    gz.translate(0, 0, -10)
+    gz.setSize(200,200,200)
+    gz.setColor((0, 0, 255, 160.0))
+    #gz.setSpacing(3,3,3)
     self.w.addItem(gz)
 
     
     self.trace = gl.GLLinePlotItem(pos=self.lines, color=pg.glColor((1, 1)), width=5, antialias=True)
     self.w.addItem(self.trace)
 
-    #timer = QtCore.QTimer()
-    #timer.timeout.connect(self.update)
-    #timer.start(0)
 
   def update(self):
     try :
       data = self.q_in.get(False)
       if data is not None :
-        point = np.array([ [ data['gX'],data['gY'], data['gZ']    ]   ])
+        point = np.array([ [ data['pX'],data['pY'], data['pZ'] ]   ])
         self.lines = np.append(self.lines ,  point , axis=0)  
         self.trace.setData(pos=self.lines, color=pg.glColor((1, 1)), width=5, antialias=True)
     except Exception :
@@ -97,7 +113,7 @@ class MotionTracker(mp.Process):
 """
 #
 # 3D Scattor Plot data
-#
+# - Can be used to check 3D space distributions
 #
 #
 """
@@ -148,7 +164,7 @@ class Scatter3DViewer(mp.Process):
 
     gz = gl.GLGridItem()
     gz.setSize(200,200,200)
-    gz.setColor((255, 0, 255, 90.0))
+    gz.setColor((0, 0, 255, 160.0))
     #gz.setSpacing(3,3,3)
     self.w.addItem(gz)
 
@@ -182,6 +198,153 @@ class Scatter3DViewer(mp.Process):
 
 
 
+"""
+# ================================================
+#
+#  Vector 3D viewer 
+# - can be used to check object orentations
+#
+# ================================================
+"""
+
+class Vector3Dviewer(mp.Process):
+  def __init__(self, q_in, q_mon):
+    mp.Process.__init__(self)
+    self.config     = get_config()[MODULE_NAME]
+    self.q_in       = q_in
+    self.q_mon      = q_mon
+
+   
+    self.trace_x = {}
+    self.trace_y = {}
+    self.trace_z = {}
+    self.line_x = np.array([ [0,0,0] ])
+    self.line_y = np.array([ [0,0,0] ])
+    self.line_z = np.array([ [0,0,0] ])
+    
+
+  def init_plot(self):
+    self.win = pg.GraphicsWindow(size=(800,600), title="3D Motion Tracker")
+    self.win.move(100, 800)
+    self.win.addLayout(row=1, col=1) 
+    self.w = gl.GLViewWidget()
+
+    layoutgb = QtGui.QGridLayout()
+    self.win.setLayout(layoutgb)
+
+    layoutgb.addWidget(self.w,0,0)
+
+
+    self.w.opts['distance'] = 400
+    self.w.setWindowTitle('GL LinePlotItem')
+    self.w.setGeometry(0, 0, 2000, 2000)
+    self.w.show()
+
+    # create the background grids
+    gx = gl.GLGridItem()
+    gx.setSize(200,200,200)
+    gx.setColor((0, 255, 0, 80.0))
+    gx.rotate(90, 0, 1, 0)
+    self.w.addItem(gx)
+
+    gy = gl.GLGridItem()
+    gy.setSize(200,200,200)
+    gy.setColor((255, 0, 0, 80.0))
+    gy.rotate(90, 1, 0, 0)
+    self.w.addItem(gy)
+
+    gz = gl.GLGridItem()
+    gz.setSize(200,200,200)
+    gz.setColor((0, 0, 255, 160.0))
+    self.w.addItem(gz)
+
+    
+    self.trace_x = gl.GLLinePlotItem(pos=self.line_x, color=pg.glColor((255, 0, 0, 160.0)), width=5, antialias=True)
+    self.w.addItem(self.trace_x)
+    self.trace_y = gl.GLLinePlotItem(pos=self.line_y, color=pg.glColor((0, 255, 0, 160.0)), width=5, antialias=True)
+    self.w.addItem(self.trace_y)
+    self.trace_z = gl.GLLinePlotItem(pos=self.line_z, color=pg.glColor((0, 0, 255, 160.0)), width=5, antialias=True)
+    self.w.addItem(self.trace_z)
+
+
+  def update(self):
+    try :
+      data = self.q_in.get(False)
+      if data is not None :
+        rot_quat = [data["qX"],data["qY"],data["qZ"],data["qW"]]
+
+        point_x = np.array([mh.rotate_vector(rot_quat, [1,0,0])]) * 60
+        point_y = np.array([mh.rotate_vector(rot_quat, [0,1,0])]) * 60
+        point_z = np.array([mh.rotate_vector(rot_quat, [0,0,1])]) * 60
+
+
+        self.line_x = np.array([ [0,0,0] ])
+        self.line_y = np.array([ [0,0,0] ])
+        self.line_z = np.array([ [0,0,0] ])
+        
+        self.line_x = np.append(self.line_x ,  point_x , axis=0)  
+        self.line_y = np.append(self.line_y ,  point_y , axis=0)  
+        self.line_z = np.append(self.line_z ,  point_z , axis=0)  
+
+        self.trace_x.setData(pos=self.line_x, color=((255, 0, 0, 160.0)), width=20, antialias=True)
+        self.trace_y.setData(pos=self.line_y, color=((0, 255, 0, 160.0)), width=20, antialias=True)
+        self.trace_z.setData(pos=self.line_z, color=((0, 0, 255, 160.0)), width=20, antialias=True)
+
+    except Exception :
+      pass
+    
+
+  def run(self):
+    self.app = QApplication.instance()
+    if self.app is None:
+      self.app = QApplication([])  
+    self.init_plot()
+    
+    timer = QtCore.QTimer()
+    timer.timeout.connect(self.update)
+    timer.start(0)
+
+    self.q_mon.put(MODULE_NAME)
+    QApplication.exec_()
+    return
+    
+
+
+"""
+# ================================================
+#
+#  Below are demo functions
+#
+# ================================================
+"""
+def MotionTracker_demo():
+  q_in          = mp.Queue()
+  q_mon         = mp.Queue()
+  data          = {}
+  p = MotionTracker(q_in =q_in, q_mon=q_mon)
+  p.start()
+
+  for alpha in np.arange(- math.pi * 6, math.pi * 6 , math.pi / 60 ):
+    data["pX"] = math.sin(alpha) * 30
+    data["pY"] = math.cos(alpha) * 60
+    data["pZ"] = alpha * 5
+    q_in.put(data)
+    time.sleep(0.01)
+
+def Vector3Dviewer_demo():
+  q_in          = mp.Queue()
+  q_mon         = mp.Queue()
+  data          = {}
+  p = Vector3Dviewer(q_in =q_in, q_mon=q_mon)
+  p.start()
+
+  for alpha in np.arange(- math.pi * 6, math.pi * 6 , math.pi / 60 ):
+    data["pX"] = math.sin(alpha) * 30
+    data["pY"] = math.cos(alpha) * 60
+    data["pZ"] = alpha * 5
+    q_in.put(data)
+    time.sleep(0.01)
+
 
 def Scatter3DViewer_demo(): 
   q_in          = mp.Queue()
@@ -204,8 +367,10 @@ def Scatter3DViewer_demo():
 
  
 if __name__ == '__main__':
-  Scatter3DViewer_demo()
-  print (math.sin(math.pi/4))
+  #MotionTracker_demo()
+  Vector3Dviewer_demo()
+  #Scatter3DViewer_demo()
+  
 
   """
   v = MotionTracker(q_in =q_in, q_mon=q_mon)
