@@ -14,12 +14,17 @@ def get_rotation_axis_angle(Q,  degrees=False):
 
 
 
-def get_euler(Q):
-  return Rotation.from_quat(Q).as_euler('xyz', degrees=False)
+def get_euler(Q,degrees=False):
+  return Rotation.from_quat(Q).as_euler('xyz', degrees=degrees)
 
   
-def rotate_vector (Q, orig_vect): 
-  return Rotation.from_quat(Q).apply(orig_vect)
+def rotate_vector (Q, orig_vect, reverse=False): 
+  if reverse != True:
+    r = Rotation.from_quat(Q)
+  else:
+    r = Rotation.from_quat(Q).inv()
+
+  return r.apply(orig_vect)
        
 if __name__ == '__main__':   
   

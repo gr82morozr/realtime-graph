@@ -4,7 +4,7 @@
 #
 # =====================================================================
 
-import os, sys
+import os, sys, time
 import math, re, time
 import multiprocessing as mp
 import py3toolbox as tb
@@ -51,12 +51,20 @@ class DataProcessor(mp.Process):
     ravg_fltr = lpf.RunningAvarageFilter(10)
     exp_fltr  = lpf.ExponentialFilter(0.2)
 
+
+    """
     mX_min = None
     mX_max = None
     mY_min = None
     mY_max = None
     mZ_min = None
     mZ_max = None
+    """
+    pX = 0
+    pY = 0
+    pZ = 0
+    t = time.time()
+    
 
     while True:
       try : 
@@ -64,7 +72,28 @@ class DataProcessor(mp.Process):
         data['Type'] = 'QUATERNION'
         data['avg.aX'], data['avg.aY'], data['avg.aZ'] = ravg_fltr.compute([data['aX'], data['aY'], data['aZ']])
         data['exp.aX'], data['exp.aY'], data['exp.aZ'] = exp_fltr.compute([data['aX'], data['aY'], data['aZ']])
+        quat = [] 
+        
+        rot_aX , rot_aY, rot_aZ = mh.rotate_vector ( [  data['qX'],  data['qY'], data["qZ"], data['qW']   ], [data['exp.aX'], data['exp.aY'], data['exp.aZ']] )
 
+
+        pX += rot_aX * (time.time() - t) * (time.time() - t)
+        pY += rot_aY * (time.time() - t) * (time.time() - t)
+        pZ += rot_aZ * (time.time() - t) * (time.time() - t)
+
+
+        t = time.time()
+        data["pX"] = pX
+        data["pY"] = pY
+        data["pZ"] = pZ
+
+        
+
+
+
+
+
+        """
         if mX_min is None : mX_min = data["mX"]
         if mX_max is None : mX_max = data["mX"]
 
@@ -82,8 +111,9 @@ class DataProcessor(mp.Process):
 
         if data["mZ"] < mZ_min : mZ_min = data["mZ"]
         if data["mZ"] > mZ_max : mZ_max = data["mZ"]
-            
-        data['Pitch'], data['Roll'],  data['Yaw'] = mh.get_euler( [  data['qX'],  data['qY'], data["qZ"], data['qW']   ]   )
+        """
+
+        data['Roll'], data['Pitch'],  data['Yaw'] = mh.get_euler( [  data['qX'],  data['qY'], data["qZ"], data['qW']   ] , degrees = True  )
 
         self.processed_data = data
         self.output_data()
@@ -105,7 +135,7 @@ class DataProcessor(mp.Process):
           Yaw +=data['gZ'] * (time.time() - t)
           data['Yaw'] = Yaw
           t = time.time()
-          data['Type'] = 'YPR'
+          data['Type'] = 'EULR'
           print (self.q_in.qsize(),self.q_out[0].qsize() )
         self.processed_data = data
         self.output_data()

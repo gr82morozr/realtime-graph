@@ -169,7 +169,7 @@ class Gyro3D(QOpenGLWidget):
       #gl.glMultMatrixf(rot_mat)
       pass
 
-    elif self.type == 'YPR' :
+    elif self.type == 'EULR' :
       gl.glRotatef(self.Roll    , 1.0, 0.0, 0.0)   # rotate against X axis
       gl.glRotatef(self.Pitch   , 0.0, 1.0, 0.0)   # rotate against Y axis
       gl.glRotatef(self.Yaw     , 0.0, 0.0, 1.0)   # rotate against Z axis

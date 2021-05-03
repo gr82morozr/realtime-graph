@@ -183,6 +183,7 @@ class DataReader(mp.Process):
     if self.config['feed_channel'] != 'FILE' :
       self.mapped_data['TS'] = time.time()
 
+    
     if bool(self.mapped_data) :
       self.get_output_rate()
       if type(self.q_out) is list:
@@ -239,6 +240,7 @@ class DataReader(mp.Process):
         except Exception as err:  
           one_char = ""
         
+        
         # EOL detected
         if one_byte == b"\r" and ser.read(1) == b"\n": 
           self.count +=1
@@ -252,6 +254,7 @@ class DataReader(mp.Process):
         exit(1)         
         
       except Exception as err:
+        print (str(err))
         pass         
 
 

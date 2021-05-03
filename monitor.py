@@ -52,7 +52,7 @@ def run_monitor() :
     gyro_viewer    = gv.GyroViewer(q_in=q_proc_out[1], q_mon=q_mon)
 
     # #d motion tracker based on inertial frame of reference
-    motion_tracker = mt.Vector3Dviewer(q_in=q_proc_out[2], q_mon=q_mon)
+    motion_tracker = mt.Vector3DViewer(q_in=q_proc_out[2], q_mon=q_mon)
 
     # make sure all other processes started first except DataReader
     pre_start_procs = [data_processor, data_logger, graph_monitor , gyro_viewer , motion_tracker]
