@@ -6,7 +6,7 @@
 #
 # Avaliable channels:
 # - FILE         : read data from file, normally for testing only
-# - SERIAL       : 
+# - SERIAL       : read data from SERIAL port
 # - MOUSE        : Use mouse movements to generate random signals + noises
 # - TCP Server   : TO DO
 # - TCP Client   : TO DO 
@@ -127,32 +127,30 @@ class UDPServer(threading.Thread):
 class DataReader(mp.Process):
   def __init__(self, q_out, q_mon):
     mp.Process.__init__(self)
-    self.config           = get_config()[MODULE_NAME]
+    self.config             = get_config()[MODULE_NAME]
 
-    self.q_out            = q_out
-    self.q_mon            = q_mon
+    self.q_out              = q_out
+    self.q_mon              = q_mon
 
+    self.rawdata            = ""
+    self.mapped_data        = {}
+    self.count              = 0
     
+    self.output_rate        = 0
+    self.output_time        = time.time()
+    self.output_time_prev   = 0
 
-    self.rawdata          = ""
-    self.mapped_data      = {}
-    self.count            = 0
-    
-    self.output_rate      = 0
-    self.output_time       = time.time()
-    self.output_time_prev  = 0
-
-    self.noises           = np.random.normal(self.config['noise']['mean'], self.config['noise']['sigma'], size=10000)
-    self.noise_level      = self.config['noise']['level']
+    self.noises             = np.random.normal(self.config['noise']['mean'], self.config['noise']['sigma'], size=10000)
+    self.noise_level        = self.config['noise']['level']
     
 
   
     
   def map_data(self,rawdata):
-    # =========================================================
+    # ---------------------------------------------------------
     # map raw data to json format
     # this needs to be customized for your own project
-    #
+    # ---------------------------------------------------------
     
     #print (rawdata);
     mapped_data = {}
@@ -309,9 +307,22 @@ class DataReader(mp.Process):
         print(str(e))
         pass
 
+
+
+  ###############################################################
+  #
+  # TO DO
+  #
+  ###############################################################
   def read_from_udpserver(self):
-    pass
   
+    pass
+
+  ###############################################################
+  #
+  # TO DO
+  #
+  ###############################################################  
   def read_from_mqtt(self):
     pass
   
@@ -351,6 +362,11 @@ class DataReader(mp.Process):
         exit(1)              
 
 
+  ###############################################################
+  #
+  # Dispatch to sub func
+  #
+  ###############################################################
 
   def run(self):
     self.q_mon.put(MODULE_NAME)

@@ -469,7 +469,7 @@ def Orientation3DViewer_demo():
 
   for v in np.arange (-1, 1 , 0.001 ):
     data["qX"] = v
-    data["qY"] = - v
+    data["qY"] = -v
     data["qZ"] = v*2
     data["qW"] = v*3
     
