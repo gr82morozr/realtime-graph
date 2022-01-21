@@ -5,7 +5,7 @@ import random, math
 import numpy as np
 import py3toolbox as tb
 import multiprocessing as mp
-from PyQt5 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QOpenGLWidget
 import pyqtgraph.opengl as gl
 import pyqtgraph as pg
@@ -46,7 +46,7 @@ class MotionTracker(mp.Process):
     self.win.addLayout(row=1, col=1) 
     self.w = gl.GLViewWidget()
 
-    layoutgb = QtGui.QGridLayout()
+    layoutgb = QtWidgets.QGridLayout()
     self.win.setLayout(layoutgb)
 
     layoutgb.addWidget(self.w,0,0)
@@ -135,7 +135,7 @@ class Scatter3DViewer(mp.Process):
     self.win.addLayout(row=1, col=1) 
     self.w = gl.GLViewWidget()
 
-    layoutgb = QtGui.QGridLayout()
+    layoutgb = QtWidgets.QGridLayout()
     self.win.setLayout(layoutgb)
 
     layoutgb.addWidget(self.w,0,0)
@@ -226,7 +226,7 @@ class Orientation3DViewer(mp.Process):
     self.win.addLayout(row=1, col=1) 
     self.w = gl.GLViewWidget()
 
-    layoutgb = QtGui.QGridLayout()
+    layoutgb = QtWidgets.QGridLayout()
     self.win.setLayout(layoutgb)
 
     layoutgb.addWidget(self.w,0,0)
@@ -335,12 +335,12 @@ class Vector3DViewer(mp.Process):
     
 
   def init_plot(self):
-    self.win = pg.GraphicsWindow(size=(800,600), title="Vector 3D Viewerr")
+    self.win = pg.GraphicsWindow(size=(800,600), title="Vector 3D Viewer")
     self.win.move(100, 800)
     self.win.addLayout(row=1, col=1) 
     self.w = gl.GLViewWidget()
 
-    layoutgb = QtGui.QGridLayout()
+    layoutgb = QtWidgets.QGridLayout()
     self.win.setLayout(layoutgb)
 
     layoutgb.addWidget(self.w,0,0)
@@ -369,16 +369,19 @@ class Vector3DViewer(mp.Process):
     gz.setColor((0, 0, 255, 160.0))
     self.w.addItem(gz)
 
-    self.line_x = np.array([ [0,0,0], [40, 0,  0] ])
+    self.line_x = np.array([ [0,0,0], [80, 0,  0] ])
     self.line_s = np.array([ [0,0,0], [40, 0,  0] ]) # reverse rotated vector
     
     self.trace_x = gl.GLLinePlotItem(pos=self.line_x, color=pg.glColor((255, 0, 0, 160.0)), width=10, antialias=True)
-    self.trace_s = gl.GLLinePlotItem(pos=self.line_s, color=pg.glColor((0, 255, 0, 160.0)), width=10, antialias=True)
     self.w.addItem(self.trace_x)
+    
+    self.trace_s = gl.GLLinePlotItem(pos=self.line_s, color=pg.glColor((0, 255, 0, 160.0)), width=10, antialias=True)
     self.w.addItem(self.trace_s)
     
     self.trace_dot = gl.GLScatterPlotItem(pos=self.dots)
     self.w.addItem(self.trace_dot)
+    
+
 
   def update(self):
     try :
@@ -386,25 +389,22 @@ class Vector3DViewer(mp.Process):
       if data is not None :
         rot_quat = [data["qX"],data["qY"],data["qZ"],data["qW"]]
         
-        #point_x = np.array([mh.rotate_vector(rot_quat,  [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ], reverse = False  )]) * 60
-        point_x = np.array( [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ] ) * 60
+        
+        point_x = np.array([mh.rotate_vector(rot_quat,  [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ], reverse = False  )]) * 60
         point_s = np.array([mh.rotate_vector(rot_quat,  [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ], reverse = True   )]) * 40
-
-        #point_x = np.array([ [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ] ] ) * 40
-        self.line_x = np.array([ [0,0,0] ])
-        self.line_x = np.append(self.line_x ,  point_x , axis=0)  
+        
+        self.line_x = np.append([ [0,0,0] ] ,  point_x , axis=0)  
         self.trace_x.setData(pos=self.line_x, color=((255, 0, 0, 160.0)), width=10, antialias=True)
+        
 
-        self.line_s = np.array([ [0,0,0] ])
-        self.line_s = np.append(self.line_s ,  point_s , axis=0)  
+        self.line_s = np.append([ [0,0,0] ] ,  point_s , axis=0)  
         self.trace_s.setData(pos=self.line_s, color=((0, 255, 0, 160.0)), width=10, antialias=True)
 
-
+        
         #dot = np.array([   [ data["exp.aX"], data["exp.aY"],data["exp.aZ"]  ]  ])
         self.dots = np.append(self.dots, point_x,   axis=0)  
-        self.dots = np.append(self.dots, point_s,   axis=0)  
         self.trace_dot.setData(pos=self.dots, color=(255, 0,0,100), size=2)
-
+        
    
 
 
@@ -487,7 +487,7 @@ def Vector3DViewer_demo():
 
   for v in np.arange (-1, 1 , 0.001 ):
     data["qX"] = v
-    data["qY"] = - v
+    data["qY"] = -v
     data["qZ"] = v*2
     data["qW"] = v*3
     

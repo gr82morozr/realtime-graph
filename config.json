@@ -107,9 +107,11 @@
 
   "_line6_" : "==================================================================================================",
   "GraphMonitor" : {
+    "_colors"           : "b, g, r, c, m, y, k, w",
     "data_feed_wait"    : false,
     "refresh_rate"      : 60,
     "win_title"         : "Realtime Data Visualizer",
+    
     "layouts"           : {
       "win_size"        : [1600,900],
       "win_layout"      : [1,1],
@@ -227,11 +229,15 @@
 
       "aX"  :    { "board_id"    : "4",   "color" : "r"  },
       "aY"  :    { "board_id"    : "5",   "color" : "g"  },
-      "aZ"  :    { "board_id"    : "6",   "color" : "m"  }
+      "aZ"  :    { "board_id"    : "6",   "color" : "m"  },
 
-      
+      "avg.aX"  :  { "board_id"    : "4",   "color" : "c"  },
+      "avg.aY"  :  { "board_id"    : "5",   "color" : "c"  },
+      "avg.aZ"  :  { "board_id"    : "6",   "color" : "c"  },
 
-    
+      "exp.aX"  :  { "board_id"    : "4",   "color" : "y"  },
+      "exp.aY"  :  { "board_id"    : "5",   "color" : "y"  },
+      "exp.aZ"  :  { "board_id"    : "6",   "color" : "y"  }  
 
     }   
 

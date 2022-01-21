@@ -189,6 +189,7 @@ class DataReader(mp.Process):
       if type(self.q_out) is list:
         for q in self.q_out:
           q.put(self.mapped_data)
+          #print (self.mapped_data)
       else:
         self.q_out.put(self.mapped_data)
       
@@ -221,7 +222,7 @@ class DataReader(mp.Process):
 
   ###############################################################
   #
-  # Read data from Serial Port
+  # Read data from Serial Port or Bluetooth Serial 
   #
   ###############################################################
   def read_from_serial(self):  
@@ -380,7 +381,8 @@ class DataReader(mp.Process):
 
 if __name__ == '__main__':   
   q_data = mp.Queue()  
-  dr = DataReader([q_data])
+  q_mon  = mp.Queue()  
+  dr = DataReader(q_out=[q_data], q_mon=q_mon)
   dr.start()
   
     

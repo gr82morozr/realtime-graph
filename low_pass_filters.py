@@ -43,7 +43,7 @@ class ExponentialFilter() :
     The ExponentialFilter is based on given weight (w) as below
     Yn = W × Xn + (1 – W) × Yn–1
 
-    
+    # In machine learning, this is "Exponentially Weighted Averages"
 
   """
   def __init__(self, weight):
