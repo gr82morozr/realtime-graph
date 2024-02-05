@@ -40,7 +40,9 @@ class GraphMonitor(mp.Process):
     self.last  = time.time()
 
   def init_plot(self):
-    self.win = pg.GraphicsWindow(size=(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1]), title="Basic plotting")
+    #self.win = pg.GraphicsWindow(size=(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1]), title="Basic plotting")
+    self.win = pg.GraphicsLayoutWidget(size=(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1]), title="Basic plotting", show=True)
+    self.win.move(0, 0)
     self.win.addLayout(row=self.config['layouts']['win_layout'][0], col=self.config['layouts']['win_layout'][1]) 
     #self.win.resize(self.config['layouts']['win_size'][0],self.config['layouts']['win_size'][1])
 

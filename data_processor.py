@@ -212,8 +212,8 @@ class DataProcessor(mp.Process):
       elif self.config['filter'] == 'NOFLTR_FOR_QUAT':
         self.apply_no_filter_for_quat()
       elif self.config['filter'] == 'TEST':
-        #self.apply_test_filter()
-        self.apply_no_filter_for_quat()
+        self.apply_test_filter()
+        #self.apply_no_filter_for_quat()
     
     except Exception as err:
       exit (1)

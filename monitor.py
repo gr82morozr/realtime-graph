@@ -28,12 +28,14 @@ import motion_tracker   as mt
 
 
 def run_monitor() :
-  processes = ["DataReader", "DataLogger", "DataProcessor", "GraphMonitor" , "GyroViewer", "MotionTracker" ]
+  #processes = ["DataReader", "DataLogger", "DataProcessor", "GraphMonitor" , "GyroViewer", "MotionTracker" ]
+  processes = ["DataReader", "DataLogger", "DataProcessor", "GraphMonitor", "GyroViewer" ]
 
   try :
     q_mon          = mp.Queue()
     q_data_out     = [mp.Queue(), mp.Queue()]               # for DataLogger and DataProcessor
-    q_proc_out     = [mp.Queue(), mp.Queue(), mp.Queue()]   # for GraphMonitor,GyroViewer,MotionTracker
+    #q_proc_out     = [mp.Queue(), mp.Queue(), mp.Queue()]  # for GraphMonitor,GyroViewer,MotionTracker
+    q_proc_out     = [mp.Queue(), mp.Queue()]               # for GraphMonitor, GyroViewer
 
     # Loading raw data from file,sensors via serial port, TCP, UDP ... etc
     data_reader    = dr.DataReader(q_out=q_data_out, q_mon=q_mon)
@@ -51,11 +53,12 @@ def run_monitor() :
     # 3D object viewer, specifically to show gyro's rotation in real time
     gyro_viewer    = gv.GyroViewer(q_in=q_proc_out[1], q_mon=q_mon)
 
-    # #d motion tracker based on inertial frame of reference
-    motion_tracker = mt.Orientation3DViewer(q_in=q_proc_out[2], q_mon=q_mon)
+    # 3D motion tracker based on inertial frame of reference
+    #motion_tracker = mt.Orientation3DViewer(q_in=q_proc_out[2], q_mon=q_mon)
 
     # make sure all other processes started first except DataReader
-    pre_start_procs = [data_processor, data_logger, graph_monitor , gyro_viewer , motion_tracker]
+    #pre_start_procs = [data_processor, data_logger, graph_monitor , gyro_viewer , motion_tracker]
+    pre_start_procs = [data_processor, data_logger, graph_monitor, gyro_viewer ]
     for p in pre_start_procs: p.start()
 
     # wait until all started except  DataReader   

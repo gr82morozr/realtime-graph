@@ -102,7 +102,7 @@
   
   "_line5_" : "==================================================================================================",
   "GyroViewer" : {
-    "object_file"     : "3DModels/shuttle_3D.obj"
+    "object_file"     : "3DModels/Shuttle_3D.obj"
   },
 
   "_line6_" : "==================================================================================================",
@@ -112,7 +112,7 @@
     "refresh_rate"      : 60,
     "win_title"         : "Realtime Data Visualizer",
     
-    "layouts"           : {
+    "layouts1"           : {
       "win_size"        : [1600,900],
       "win_layout"      : [1,1],
       "boards"          : { 
@@ -131,6 +131,15 @@
       }
     },
     
+    "layouts"           : {
+      "win_size"        : [1600,900],
+      "win_layout"      : [1,1],
+      "boards"          : { 
+        "1"   : { "layout" : [1,1,1,1], "max_entries" : 400 },
+        "2"   : { "layout" : [2,1,1,1], "max_entries" : 400 },
+        "3"   : { "layout" : [3,1,1,1], "max_entries" : 400 }
+      }
+    },
     
     "data_config1"   : { 
       "Target"   : { "board_id"    : "1", "color" : "g"  },
@@ -223,21 +232,14 @@
 
     "data_config"   : { 
 
-      "gX"  :    { "board_id"    : "1",   "color" : "r"  },
-      "gY"  :    { "board_id"    : "2",   "color" : "g"  },
-      "gZ"  :    { "board_id"    : "3",   "color" : "m"  },
+      "Yaw"     :    { "board_id"    : "1",   "color" : "r"  },
+      "avgY"  :    { "board_id"    : "1",   "color" : "w"  },
 
-      "aX"  :    { "board_id"    : "4",   "color" : "r"  },
-      "aY"  :    { "board_id"    : "5",   "color" : "g"  },
-      "aZ"  :    { "board_id"    : "6",   "color" : "m"  },
+      "Roll"     :    { "board_id"    : "2",   "color" : "g"  },
+      "avgR"  :    { "board_id"    : "2",   "color" : "w"  },
 
-      "avg.aX"  :  { "board_id"    : "4",   "color" : "c"  },
-      "avg.aY"  :  { "board_id"    : "5",   "color" : "c"  },
-      "avg.aZ"  :  { "board_id"    : "6",   "color" : "c"  },
-
-      "exp.aX"  :  { "board_id"    : "4",   "color" : "y"  },
-      "exp.aY"  :  { "board_id"    : "5",   "color" : "y"  },
-      "exp.aZ"  :  { "board_id"    : "6",   "color" : "y"  }  
+      "Pitch"     :    { "board_id"    : "3",   "color" : "m"  },
+      "avgP"  :    { "board_id"    : "3",   "color" : "w"  }
 
     }   
 

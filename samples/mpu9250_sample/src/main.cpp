@@ -6,22 +6,25 @@ MPU9250_Basic
 Jim Lindblom @ SparkFun Electronics
 original creation date: November 23, 2016
 https://github.com/sparkfun/SparkFun_MPU9250_Arduino_Library
-
 This example sketch demonstrates how to initialize the 
 MPU-9250, and stream its sensor outputs to a serial monitor.
-
 Development environment specifics:
 Arduino IDE 1.6.12
 SparkFun 9DoF Razor IMU M0
-
 Supported Platforms:
 - ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
 *************************************************************/
 #include <MPU9250.h>
-
-
+#define LED 2
 
 MPU9250 imu;
+
+
+
+
+
+
+
 
 
 void printIMUData(void) {  
@@ -53,25 +56,29 @@ void printIMUData(void) {
   float Pitch = imu.pitch;
   float Yaw   = imu.yaw;
 
-  // avoid quat norm is 0 at begining of the program
-  if ( qW==0.0 && qX == 0.0 && qY == 0.0 && qZ == 0.0) return;
-
   Serial.println("aX=" + String(aX) + ",aY=" +  String(aY) + ",aZ=" + String(aZ) + ",gX=" + String(gX) + ",gY=" +String(gY) + ",gZ=" + String(gZ) + ",qW=" + String(qW) + ",qX=" + String(qX) + ",qY=" + String(qY) + ",qZ=" + String(qZ) + ",Roll=" + String(Roll) + ",Pitch=" + String(Pitch) + ",Yaw=" + String(Yaw) +  ",mX=" + String(mX) + ",mY="  +  String(mY) + ",mZ=" + String(mZ) + ",TS=" + String(imu.time));
-  
+  //tft.println(String(aX));
+  digitalWrite(LED, 1-digitalRead(LED));
+
 }
 
 
 
 
-void setup() 
-{
+void setup() {
   Serial.begin(115200);
+  
+  pinMode(2,OUTPUT);
+  
+  
 
-  // Call imu.begin() to verify communication with and
+
+
+  // Call imu.begin(SDA_pin, SCL_pin) to verify communication with and
   // initialize the MPU-9250 to it's default values.
   // Most functions return an error code - INT_SUCCESS (0)
   // indicates the IMU was present and successfully set up
-  if (imu.begin() != INT_SUCCESS) {
+  if (imu.begin(21,22) != INT_SUCCESS) { // imu.begin(SDA_pin, SCL_pin) 
     while (1)  {
       Serial.println("Unable to communicate with MPU-9250");
       Serial.println("Check connections, and try again.");
@@ -96,7 +103,7 @@ void setup()
   // Gyro options are +/- 250, 500, 1000, or 2000 dps
   imu.set_gyro_scale(2000); // Set gyro to 2000 dps
   // Accel options are +/- 2, 4, 8, or 16 g
-  imu.set_accel_scale(2); // Set accel to +/-2g
+  imu.set_accel_scale(4); // Set accel to +/-2g
   // Note: the MPU-9250's magnetometer FSR is set at 
   // +/- 4912 uT (micro-tesla's)
 
@@ -108,7 +115,7 @@ void setup()
 
   // The sample rate of the accel/gyro can be set using
   // set_sample_rate. Acceptable values range from 4Hz to 1kHz
-  imu.set_sample_rate(10); // Set sample rate to 10Hz
+  imu.set_sample_rate(60); // Set sample rate to 10Hz
 
   // Likewise, the compass (magnetometer) sample rate can be
   // set using the set_mag_sample_rate() function.
@@ -119,6 +126,7 @@ void setup()
 }
 
 void loop() {
+
   // is_data_ready() checks to see if new accel/gyro data
   // is available. It will return a boolean true or false
   // (New magnetometer data cannot be checked, as the library
@@ -143,4 +151,3 @@ void loop() {
     }
   }
 }
-
